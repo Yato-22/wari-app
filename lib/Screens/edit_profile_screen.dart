@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -147,14 +148,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     CustomTextField(
                       label: 'PHONE NUMBER / मोबाईल क्रमांक',
                       controller: _phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Enter 10-digit mobile number',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       label: 'EMERGENCY CONTACT NUMBER / आपत्कालीन संपर्क',
                       controller: _emergencyContactController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Enter 10-digit mobile number',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       prefixIcon: const Icon(Icons.emergency_outlined, color: AppColors.error),
                     ),
                     const SizedBox(height: 16),

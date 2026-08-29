@@ -10,6 +10,7 @@ void main() async {
   
   await Supabase.initialize(
     url: 'https://hoeayfrmlclbxmikwcyl.supabase.co',
+    // ignore: deprecated_member_use
     anonKey: 'sb_publishable_3a1m9eDPOma0HhLRFsu7sA_eW4WXAGG',
   );
 

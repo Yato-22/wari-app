@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -15,7 +16,7 @@ class LoginOtpScreen extends StatefulWidget {
 }
 
 class _LoginOtpScreenState extends State<LoginOtpScreen> {
-  final TextEditingController _phoneController = TextEditingController(text: '9876543210');
+  final TextEditingController _phoneController = TextEditingController();
   final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
@@ -54,8 +55,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   }
 
   void _sendOtp() async {
-    final phone = _phoneController.text.trim();
-    if (phone.length < 10) {
+    final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '').trim();
+    if (phone.length != 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid 10-digit mobile number')),
       );
@@ -96,7 +97,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   }
 
   void _verifyOtp() async {
-    final phone = _phoneController.text.trim();
+    final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '').trim();
     final otp = _otpControllers.map((c) => c.text).join();
     if (otp.length < 6) return;
 
@@ -200,39 +201,25 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.outlineVariant),
-                          ),
-                          child: const Text(
-                            '+91',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            enabled: !_otpSent,
-                            style: AppTypography.bodyMd.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'Enter 10 digit number',
-                            ),
-                          ),
-                        ),
+                    TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.number,
+                      enabled: !_otpSent,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
                       ],
+                      style: AppTypography.bodyMd.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Enter 10-digit mobile number',
+                        prefixIcon: Icon(
+                          Icons.phone_android,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                     if (!_otpSent) ...[
                       const SizedBox(height: 16),

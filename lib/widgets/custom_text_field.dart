@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
@@ -9,9 +10,11 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final TextInputType keyboardType;
   final int maxLines;
+  final int? maxLength;
   final bool obscureText;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
   final bool readOnly;
@@ -25,9 +28,11 @@ class CustomTextField extends StatelessWidget {
     this.controller,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
+    this.maxLength,
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
+    this.inputFormatters,
     this.onChanged,
     this.validator,
     this.readOnly = false,
@@ -53,6 +58,8 @@ class CustomTextField extends StatelessWidget {
           initialValue: initialValue,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           obscureText: obscureText,
           readOnly: readOnly,
           onTap: onTap,

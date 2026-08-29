@@ -103,6 +103,7 @@ class VolunteerApplication {
     String? experience,
     VolunteerStatus? status,
     DateTime? appliedAt,
+    String? userId,
   }) {
     return VolunteerApplication(
       id: id ?? this.id,

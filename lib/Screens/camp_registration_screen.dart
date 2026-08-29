@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -18,8 +19,8 @@ class _CampRegistrationScreenState extends State<CampRegistrationScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _capacityController = TextEditingController(text: '500');
-  final TextEditingController _inchargeController = TextEditingController(text: 'Vitthal Bhakt');
-  final TextEditingController _phoneController = TextEditingController(text: '9876543210');
+  final TextEditingController _inchargeController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   FacilityType _selectedType = FacilityType.food;
   bool _is24Hours = true;
@@ -231,7 +232,12 @@ class _CampRegistrationScreenState extends State<CampRegistrationScreen> {
                     CustomTextField(
                       label: 'CONTACT NUMBER',
                       controller: _phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Enter 10-digit mobile number',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
                     ),
                   ],

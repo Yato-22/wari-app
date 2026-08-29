@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -17,7 +18,7 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
   final TextEditingController _nameController = TextEditingController(text: 'Vitthal Bhakt');
   final TextEditingController _trustController = TextEditingController(text: 'Shri Vitthal Seva Pratishthan Trust');
   final TextEditingController _regNoController = TextEditingController(text: 'MAH/PUN/2018/9842');
-  final TextEditingController _phoneController = TextEditingController(text: '9876543210');
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController(text: 'vitthal.bhakt@warkari.org');
   String _selectedIdType = 'Aadhaar Card';
 
@@ -127,7 +128,12 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
                     CustomTextField(
                       label: 'CONTACT NUMBER *',
                       controller: _phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Enter 10-digit mobile number',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
                     ),
                     const SizedBox(height: 16),
