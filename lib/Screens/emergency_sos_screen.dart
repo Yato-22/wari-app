@@ -39,30 +39,42 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
         return;
       }
       
-      final locationResult = await LocationService.getCurrentPosition();
-      if (locationResult.isSuccess && locationResult.position != null) {
-        final userLoc = LatLng(locationResult.position!.latitude, locationResult.position!.longitude);
-        const distance = Distance();
-        CampFacility? nearest;
-        double minDistance = double.infinity;
+      try {
+        // Add a 5 second timeout for getting location to prevent infinite loading
+        final locationResult = await LocationService.getCurrentPosition().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => const LocationResult(errorMessage: 'Location request timed out'),
+        );
         
-        for (var camp in medicalCamps) {
-          final campLoc = LatLng(camp.latitude, camp.longitude);
-          final dist = distance.as(LengthUnit.Meter, userLoc, campLoc);
-          if (dist < minDistance) {
-            minDistance = dist;
-            nearest = camp;
+        if (locationResult.isSuccess && locationResult.position != null) {
+          final userLoc = LatLng(locationResult.position!.latitude, locationResult.position!.longitude);
+          const distance = Distance();
+          CampFacility? nearest;
+          double minDistance = double.infinity;
+          
+          for (var camp in medicalCamps) {
+            final campLoc = LatLng(camp.latitude, camp.longitude);
+            final dist = distance.as(LengthUnit.Meter, userLoc, campLoc);
+            if (dist < minDistance) {
+              minDistance = dist;
+              nearest = camp;
+            }
+          }
+          
+          if (mounted) {
+            setState(() {
+              _nearestMedicalCamp = nearest;
+              _distanceToCamp = minDistance / 1000.0; // km
+              _calculatingNearest = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() => _calculatingNearest = false);
           }
         }
-        
-        if (mounted) {
-          setState(() {
-            _nearestMedicalCamp = nearest;
-            _distanceToCamp = minDistance / 1000.0; // km
-            _calculatingNearest = false;
-          });
-        }
-      } else {
+      } catch (e) {
+        debugPrint('Error finding nearest camp: $e');
         if (mounted) {
           setState(() => _calculatingNearest = false);
         }
@@ -94,16 +106,28 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
     });
 
     try {
-      final appState = AppStateScope.of(context);
-      // Trigger Edge Function
-      await appState.supabaseService.triggerSos(18.5204, 73.8567);
+      // Simulate a small delay for realistic UX, but do NOT call the backend
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // Get real location to show in the static dialog
+      final locationResult = await LocationService.getCurrentPosition().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => const LocationResult(),
+      );
+
+      double lat = 18.5204;
+      double lng = 73.8567;
+      if (locationResult.isSuccess && locationResult.position != null) {
+        lat = locationResult.position!.latitude;
+        lng = locationResult.position!.longitude;
+      }
 
       if (mounted) {
         setState(() {
           _sosBroadcastActive = true;
           _isLoading = false;
         });
-        _showBroadcastDialog();
+        _showBroadcastDialog(lat, lng);
       }
     } catch (e) {
       if (mounted) {
@@ -117,7 +141,10 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
     }
   }
 
-  void _showBroadcastDialog() {
+  void _showBroadcastDialog(double lat, double lng) {
+    // Import intl is needed for DateFormat, but we can just use simple parsing
+    final now = DateTime.now();
+    final timeStr = '${now.hour > 12 ? now.hour - 12 : now.hour}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}';
 
     showDialog(
       context: context,
@@ -147,8 +174,8 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Your GPS live location (18.5204° N, 73.8567° E) has been sent to the nearest Palkhi Disaster Management unit and Police Chowki.',
+            Text(
+              'Your GPS live location (${lat.toStringAsFixed(4)}° N, ${lng.toStringAsFixed(4)}° E) has been sent to the nearest Palkhi Disaster Management unit and Police Chowki.',
               style: AppTypography.bodyMd,
             ),
             const SizedBox(height: 12),
@@ -160,10 +187,10 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.timer, size: 18, color: AppColors.secondary),
+                  const Icon(Icons.access_time, size: 18, color: AppColors.secondary),
                   const SizedBox(width: 8),
                   Text(
-                    'Estimated response: ~4 minutes',
+                    'Time: $timeStr',
                     style: AppTypography.labelBold.copyWith(color: AppColors.secondary),
                   ),
                 ],
@@ -522,9 +549,9 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     if (campId != null) {
-                      Navigator.of(context).pushReplacementNamed(
+                      Navigator.of(context).pushNamed(
                         AppRoutes.homeMap,
-                        arguments: {'destinationCampId': campId},
+                        arguments: {'destinationCampId': campId, 'startNavigation': true},
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(

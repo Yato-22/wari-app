@@ -15,6 +15,7 @@ class OrganiserApplicationStep1Screen extends StatefulWidget {
 }
 
 class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationStep1Screen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController(text: 'Vitthal Bhakt');
   final TextEditingController _trustController = TextEditingController(text: 'Shri Vitthal Seva Pratishthan Trust');
   final TextEditingController _regNoController = TextEditingController(text: 'MAH/PUN/2018/9842');
@@ -35,10 +36,7 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
   }
 
   void _goToStep2() {
-    if (_nameController.text.trim().isEmpty || _trustController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required trust details')),
-      );
+    if (!_formKey.currentState!.validate()) {
       return;
     }
     Navigator.of(context).pushNamed(AppRoutes.organiserAppStep2);
@@ -56,7 +54,9 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Progress Bar
@@ -111,18 +111,21 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
                       label: 'ORGANISER / TRUSTEE NAME *',
                       controller: _nameController,
                       prefixIcon: const Icon(Icons.person, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       label: 'TRUST / MANDALI / MANDAL NAME *',
                       controller: _trustController,
                       prefixIcon: const Icon(Icons.account_balance, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       label: 'TRUST REGISTRATION NUMBER / नोंदणी क्रमांक *',
                       controller: _regNoController,
                       prefixIcon: const Icon(Icons.badge, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -135,6 +138,7 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
                         LengthLimitingTextInputFormatter(10),
                       ],
                       prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().length != 10 ? 'Enter valid 10 digit number' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -189,6 +193,7 @@ class _OrganiserApplicationStep1ScreenState extends State<OrganiserApplicationSt
               ),
               const SizedBox(height: 20),
             ],
+            ),
           ),
         ),
       ),

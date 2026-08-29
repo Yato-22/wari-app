@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'navigation/app_routes.dart';
 import 'models/app_state.dart';
-import 'screens/language_selection_screen.dart';
-import 'screens/home_map_screen.dart';
+import 'Screens/language_selection_screen.dart';
+import 'Screens/home_map_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 

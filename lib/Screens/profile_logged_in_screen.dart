@@ -51,8 +51,10 @@ class ProfileLoggedInScreen extends StatelessWidget {
                             color: AppColors.primaryContainer.withValues(alpha: 0.2),
                             border: Border.all(color: AppColors.primary, width: 2),
                           ),
-                          child: const Center(
-                            child: Icon(Icons.person, size: 36, color: AppColors.primary),
+                          child: const CircleAvatar(
+                            radius: 30,
+                            backgroundImage: AssetImage('assets/images/logo.png'),
+                            backgroundColor: Colors.transparent,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -151,7 +153,7 @@ class ProfileLoggedInScreen extends StatelessWidget {
                     _buildTile(
                       icon: Icons.insights,
                       title: 'My Activity',
-                      subtitle: 'View your reports, volunteering & donations',
+                      subtitle: 'View your reports & volunteering',
                       onTap: () {
                         Navigator.of(context).pushNamed(AppRoutes.activityTracker);
                       },
@@ -181,15 +183,6 @@ class ProfileLoggedInScreen extends StatelessWidget {
                         },
                       ),
                     ],
-                    const Divider(height: 1),
-                    _buildTile(
-                      icon: Icons.payments_outlined,
-                      title: 'Donate to Camps',
-                      subtitle: 'Support Anna Chhatra and medical camps',
-                      onTap: () {
-                        Navigator.of(context).pushNamed(AppRoutes.donateMoney);
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -214,15 +207,6 @@ class ProfileLoggedInScreen extends StatelessWidget {
                         subtitle: 'Manage camp status, capacity & volunteers',
                         onTap: () {
                           Navigator.of(context).pushNamed(AppRoutes.profileOrgManagement);
-                        },
-                      ),
-                      const Divider(height: 1),
-                      _buildTile(
-                        icon: Icons.volunteer_activism,
-                        title: 'Organiser Donations Dashboard',
-                        subtitle: 'Track donations & financial support',
-                        onTap: () {
-                          Navigator.of(context).pushNamed(AppRoutes.profileOrgDonation);
                         },
                       ),
                     ],

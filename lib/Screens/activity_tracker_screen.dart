@@ -5,9 +5,10 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../models/issue_report.dart';
 import '../models/volunteer_opportunity.dart';
-import '../models/donation_model.dart';
 import '../navigation/app_routes.dart';
 import '../models/app_state.dart';
+import '../models/user_profile.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ActivityTrackerScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -34,7 +35,6 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
     final appState = AppStateScope.of(context);
     final myReports = appState.myReports;
     final myVolunteerApps = appState.volunteerApplications;
-    final myDonations = appState.donations;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,9 +58,10 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
                 ),
                 child: Row(
                   children: [
-                    _buildTabButton(0, 'My Reports (${myReports.length})'),
-                    _buildTabButton(1, 'Volunteering (${myVolunteerApps.length})'),
-                    _buildTabButton(2, 'Donations (${myDonations.length})'),
+                    if (appState.user.role == UserRole.warkari || appState.user.role == UserRole.organiser)
+                      _buildTabButton(0, 'My Reports (${myReports.length})'),
+                    if (appState.user.role == UserRole.volunteer || appState.user.role == UserRole.organiser)
+                      _buildTabButton(1, 'Volunteering (${myVolunteerApps.length})'),
                   ],
                 ),
               ),
@@ -72,9 +73,10 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
               child: IndexedStack(
                 index: _activeTab,
                 children: [
-                  _buildReportsList(myReports),
-                  _buildVolunteeringList(myVolunteerApps),
-                  _buildDonationsList(myDonations),
+                  if (appState.user.role == UserRole.warkari || appState.user.role == UserRole.organiser)
+                    _buildReportsList(myReports),
+                  if (appState.user.role == UserRole.volunteer || appState.user.role == UserRole.organiser)
+                    _buildVolunteeringList(myVolunteerApps),
                 ],
               ),
             ),
@@ -213,7 +215,7 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
                   const Icon(Icons.access_time, size: 14, color: AppColors.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
-                    'Reported 45 mins ago',
+                    'Reported ${timeago.format(report.createdAt.toLocal())}',
                     style: AppTypography.labelBold.copyWith(
                       fontSize: 11,
                       color: AppColors.onSurfaceVariant,
@@ -313,87 +315,6 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
     );
   }
 
-  Widget _buildDonationsList(List<DonationRecord> donations) {
-    if (donations.isEmpty) {
-      return const Center(child: Text('No donations found.'));
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: donations.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final don = donations[index];
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
-            boxShadow: const [AppColors.tactileSaffronShadow],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    don.id,
-                    style: AppTypography.labelBold.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Text(
-                    '₹${don.amount.toInt()}',
-                    style: AppTypography.headlineLgMobile.copyWith(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                don.campName,
-                style: AppTypography.headlineLgMobile.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text('Mode: ${don.paymentMode}', style: AppTypography.bodySm),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Receipt available',
-                    style: AppTypography.labelBold.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Downloading 80G tax receipt for ${don.id}...')),
-                      );
-                    },
-                    icon: const Icon(Icons.download, size: 16),
-                    label: const Text('Download Receipt'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // Donations list removed as requested.
 }
 

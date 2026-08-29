@@ -457,9 +457,20 @@ class _HomeMapScreenState extends State<HomeMapScreen>
                               children: [
                                 const Icon(Icons.timer, size: 16, color: AppColors.secondary),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${(_activeNavigationRoute!.durationSeconds / 60).toStringAsFixed(0)} min',
-                                  style: AppTypography.labelBold,
+                                // Speed = 4 km/h => Time (hrs) = distance (km) / 4
+                                Builder(
+                                  builder: (context) {
+                                    final distKm = _activeNavigationRoute!.distanceMeters / 1000;
+                                    final timeHrs = distKm / 4.0;
+                                    final totalMins = (timeHrs * 60).round();
+                                    final timeStr = timeHrs >= 1.0 
+                                      ? '${timeHrs.floor()}h ${totalMins % 60}m' 
+                                      : '$totalMins min';
+                                    return Text(
+                                      timeStr,
+                                      style: AppTypography.labelBold,
+                                    );
+                                  }
                                 ),
                               ],
                             ),

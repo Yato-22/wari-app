@@ -16,6 +16,7 @@ class OrganiserApplicationStep2Screen extends StatefulWidget {
 }
 
 class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationStep2Screen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _facilityNameController = TextEditingController(text: 'Vitthal Rukmini Anna Chhatra');
   final TextEditingController _capacityController = TextEditingController(text: '1200');
   final TextEditingController _addressController = TextEditingController(text: 'Survey No. 45, Alandi-Pandharpur Palkhi Marg, Saswad');
@@ -63,6 +64,9 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
   }
 
   void _submitApplication() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please agree to the verification terms')),
@@ -134,7 +138,9 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Progress Bar (100%)
@@ -189,6 +195,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
                       label: 'FACILITY / SEVA CAMP NAME *',
                       controller: _facilityNameController,
                       prefixIcon: const Icon(Icons.campaign, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -218,6 +225,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
                       controller: _capacityController,
                       keyboardType: TextInputType.number,
                       prefixIcon: const Icon(Icons.groups, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -257,6 +265,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
                       controller: _addressController,
                       maxLines: 2,
                       prefixIcon: const Icon(Icons.pin_drop, color: AppColors.primary),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Required field' : null,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -299,6 +308,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
                       controller: _emergencyContactController,
                       keyboardType: TextInputType.phone,
                       prefixIcon: const Icon(Icons.phone_in_talk, color: AppColors.error),
+                      validator: (val) => val == null || val.trim().length < 10 ? 'Enter valid number' : null,
                     ),
                   ],
                 ),
@@ -329,6 +339,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
               ),
               const SizedBox(height: 20),
             ],
+            ),
           ),
         ),
       ),
