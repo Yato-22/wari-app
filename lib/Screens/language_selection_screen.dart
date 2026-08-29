@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/custom_button.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({super.key});
@@ -12,7 +13,7 @@ class LanguageSelectionScreen extends StatefulWidget {
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
-  String _selectedLanguage = 'mr'; // 'mr', 'hi', 'en'
+  // Let's remove the static _selectedLanguage and use AppState instead when needed.
 
   final List<Map<String, String>> _languages = [
     {
@@ -37,6 +38,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = AppStateScope.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -67,14 +69,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Select Language\nभाषा निवडा',
+              Text(
+                appState.translate('select_language'),
                 textAlign: TextAlign.center,
                 style: AppTypography.headlineLg,
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose your preferred language for the pilgrimage journey',
+                appState.translate('language_desc'),
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySm.copyWith(
                   color: AppColors.onSurfaceVariant,
@@ -88,13 +90,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final item = _languages[index];
-                    final isSelected = _selectedLanguage == item['code'];
+                    final isSelected = appState.currentLanguage == item['code'];
 
                     return InkWell(
                       onTap: () {
-                        setState(() {
-                          _selectedLanguage = item['code']!;
-                        });
+                        appState.setLanguage(item['code']!);
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: AnimatedContainer(
@@ -162,7 +162,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               ),
               // Continue Button
               CustomButton(
-                label: 'Continue / पुढे जा',
+                label: appState.translate('continue'),
                 icon: Icons.arrow_forward,
                 iconTrailing: true,
                 onPressed: () {

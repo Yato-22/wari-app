@@ -8,6 +8,8 @@ import 'organiser_app_model.dart';
 import '../services/supabase_service.dart';
 import 'user_profile.dart';
 
+import '../l10n/app_localizations.dart';
+
 class AppState extends ChangeNotifier {
   final SupabaseService supabaseService = SupabaseService();
   bool isLoading = false;
@@ -27,6 +29,10 @@ class AppState extends ChangeNotifier {
   void setLanguage(String lang) {
     _currentLanguage = lang;
     notifyListeners();
+  }
+  
+  String translate(String key) {
+    return AppLocalizations(_currentLanguage).translate(key);
   }
 
   // Active Bottom Nav Tab Index (0: Map, 1: Volunteer, 2: Reports, 3: Profile)

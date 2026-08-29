@@ -5,6 +5,7 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../models/volunteer_opportunity.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class VolunteerOpportunitiesScreen extends StatelessWidget {
   const VolunteerOpportunitiesScreen({super.key});
@@ -86,6 +87,7 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appState = AppStateScope.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppTopBar(
@@ -184,7 +186,7 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(9999),
                               ),
                               child: Text(
-                                '$slotsRemaining slots left',
+                                '$slotsRemaining ${appState.translate('slots_left')}',
                                 style: AppTypography.labelBold.copyWith(
                                   fontSize: 10,
                                   color: slotsRemaining > 5
@@ -234,7 +236,7 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                'Meals & Stay Included',
+                                appState.translate('meals_stay_included'),
                                 style: AppTypography.labelBold.copyWith(
                                   color: AppColors.secondary,
                                   fontSize: 11,
@@ -252,9 +254,9 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.arrow_forward, size: 16),
-                              label: const Text(
-                                'View & Apply',
-                                style: TextStyle(fontSize: 12),
+                              label: Text(
+                                appState.translate('view_apply'),
+                                style: const TextStyle(fontSize: 12),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,

@@ -4,6 +4,8 @@ import '../theme/app_typography.dart';
 import '../models/camp_facility.dart';
 import 'status_chip.dart';
 
+import '../models/app_state.dart';
+
 class FacilityCard extends StatelessWidget {
   final CampFacility facility;
   final VoidCallback? onClose;
@@ -145,7 +147,7 @@ class FacilityCard extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onNavigate,
                 icon: const Icon(Icons.directions, size: 16),
-                label: const Text('Navigate'),
+                label: Text(AppStateScope.of(context).translate('navigate')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.onPrimary,
@@ -168,7 +170,7 @@ class FacilityCard extends StatelessWidget {
                     onPressed: onReportIssue,
                     icon: const Icon(Icons.report_problem, size: 14, color: AppColors.error),
                     label: Text(
-                      'Report Issue',
+                      AppStateScope.of(context).translate('report_issue'),
                       style: AppTypography.labelBold.copyWith(color: AppColors.error, fontSize: 11),
                     ),
                     style: TextButton.styleFrom(
@@ -182,7 +184,7 @@ class FacilityCard extends StatelessWidget {
                     onPressed: onDonate,
                     icon: const Icon(Icons.favorite, size: 14, color: AppColors.secondary),
                     label: Text(
-                      'Donate',
+                      AppStateScope.of(context).translate('donate'),
                       style: AppTypography.labelBold.copyWith(color: AppColors.secondary, fontSize: 11),
                     ),
                     style: TextButton.styleFrom(

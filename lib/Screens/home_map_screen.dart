@@ -26,7 +26,6 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   final MapController _mapController = MapController();
   FacilityType _selectedFilter = FacilityType.all;
   CampFacility? _selectedFacility;
-  final TextEditingController _searchController = TextEditingController();
 
   int _currentMapLayerIndex = 0;
   final List<Map<String, String>> _mapTileLayers = [
@@ -102,7 +101,6 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   @override
   void dispose() {
     _pulseController.dispose();
-    _searchController.dispose();
     _mapController.dispose();
     _positionStreamSubscription?.cancel();
     super.dispose();
@@ -213,15 +211,6 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     if (_selectedFilter != FacilityType.all) {
       list = list.where((f) => f.type == _selectedFilter).toList();
     }
-    final query = _searchController.text.toLowerCase().trim();
-    if (query.isNotEmpty) {
-      list = list
-          .where((f) =>
-              f.name.toLowerCase().contains(query) ||
-              f.description.toLowerCase().contains(query) ||
-              f.locationName.toLowerCase().contains(query))
-          .toList();
-    }
     return list;
   }
 
@@ -311,7 +300,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               ),
             ),
 
-          // 2. Floating Top Controls (Search & Filter Chips)
+          // 2. Floating Top Controls (Filter Chips)
           Positioned(
             top: 12,
             left: 16,
@@ -319,68 +308,24 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Search Bar
-                Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(9999),
-                    border: Border.all(
-                      color: AppColors.outlineVariant.withValues(alpha: 0.5),
-                    ),
-                    boxShadow: const [AppColors.tactileSaffronShadow],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.search,
-                          color: AppColors.onSurfaceVariant),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (_) => setState(() {}),
-                          decoration: const InputDecoration(
-                            hintText:
-                                'Search facilities, medical, water, camps...',
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            filled: false,
-                          ),
-                        ),
-                      ),
-                      if (_searchController.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {});
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
                 // Filter Chips
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip('All', FacilityType.all, Icons.done),
+                      _buildFilterChip(appState.translate('all'), FacilityType.all, Icons.done),
                       const SizedBox(width: 8),
                       _buildFilterChip(
-                          'Food', FacilityType.food, Icons.restaurant),
+                          appState.translate('food'), FacilityType.food, Icons.restaurant),
                       const SizedBox(width: 8),
                       _buildFilterChip(
-                          'Water', FacilityType.water, Icons.water_drop),
+                          appState.translate('water'), FacilityType.water, Icons.water_drop),
                       const SizedBox(width: 8),
                       _buildFilterChip(
-                          'Medical', FacilityType.medical, Icons.medical_services),
+                          appState.translate('medical'), FacilityType.medical, Icons.medical_services),
                       const SizedBox(width: 8),
                       _buildFilterChip(
-                          'Toilet', FacilityType.toilet, Icons.wc),
+                          appState.translate('toilet'), FacilityType.toilet, Icons.wc),
                     ],
                   ),
                 ),
@@ -783,7 +728,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             boxShadow: const [AppColors.tactileSaffronShadow],
           ),
           child: Text(
-            'Live Palkhi',
+            appState.translate('live_palkhi'),
             style: AppTypography.labelBold.copyWith(
               color: AppColors.onPrimaryContainer,
               fontSize: 10,
