@@ -86,7 +86,7 @@ class AppState extends ChangeNotifier {
   /// Returns `true` if a saved role already existed (directly authenticated).
   /// Returns `false` if user is new and needs to select their role.
   /// Throws if the auth session is not available (currentUser is null).
-  Future<bool> login(String phone) async {
+  Future<bool> login(String phone, String name) async {
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
     final formattedPhone = cleanPhone.startsWith('+')
         ? cleanPhone
@@ -116,7 +116,7 @@ class AppState extends ChangeNotifier {
       _user = UserProfile(
         id: userId,
         phone: formattedPhone,
-        displayName: 'Warkari',
+        displayName: name,
         role: UserRole.warkari,
       );
       // Not yet authenticated until role is chosen

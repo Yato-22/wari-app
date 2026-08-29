@@ -91,7 +91,12 @@ class AppRoutes {
       case roleSelection:
         return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
       case homeMap:
-        return MaterialPageRoute(builder: (_) => const HomeMapScreen());
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => HomeMapScreen(
+            destinationCampId: args?['destinationCampId'] as String?,
+          ),
+        );
       case profileGuest:
         return MaterialPageRoute(builder: (_) => const ProfileGuestScreen());
       case profileLoggedIn:

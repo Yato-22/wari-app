@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'navigation/app_routes.dart';
 import 'models/app_state.dart';
+import 'screens/language_selection_screen.dart';
+import 'screens/home_map_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -59,7 +61,15 @@ class _WariConnectAppState extends State<WariConnectApp> {
         title: 'WariConnect - Vithala Guide',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.language,
+        home: Builder(
+          builder: (context) {
+            final appState = AppStateScope.of(context);
+            if (appState.isGuest) {
+              return const LanguageSelectionScreen();
+            }
+            return const HomeMapScreen();
+          },
+        ),
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );

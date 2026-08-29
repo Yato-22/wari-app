@@ -2,6 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
+/// Represents a point-to-point route with metadata.
+class NavigationRoute {
+  final List<LatLng> points;
+  final double distanceMeters;
+  final double durationSeconds;
+
+  NavigationRoute(this.points, this.distanceMeters, this.durationSeconds);
+}
+
 /// Service that fetches road-snapped routes from the OSRM routing engine.
 /// Uses the public OSRM demo server with the "foot" profile (walking).
 class RoutingService {
@@ -65,6 +74,39 @@ class RoutingService {
   /// Clears the cached route (useful if waypoints change).
   static void clearCache() {
     _cachedRoute = null;
+  }
+
+  /// Fetches a point-to-point route with distance and duration.
+  static Future<NavigationRoute?> fetchNavigationRoute(LatLng start, LatLng end, {String profile = 'driving'}) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/route/v1/$profile/${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
+        '?overview=full&geometries=polyline',
+      );
+
+      final response = await http.get(url).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['code'] == 'Ok' &&
+            data['routes'] != null &&
+            (data['routes'] as List).isNotEmpty) {
+          final routeData = data['routes'][0];
+          final encodedPolyline = routeData['geometry'] as String;
+          final decoded = _decodePolyline(encodedPolyline);
+          final distance = (routeData['distance'] as num).toDouble();
+          final duration = (routeData['duration'] as num).toDouble();
+
+          if (decoded.isNotEmpty) {
+            return NavigationRoute(decoded, distance, duration);
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Decodes a Google-encoded polyline string into a list of [LatLng].

@@ -166,7 +166,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                 icon: Icons.arrow_forward,
                 iconTrailing: true,
                 onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.homeMap);
+                  if (appState.isGuest) {
+                    Navigator.of(context).pushReplacementNamed(AppRoutes.loginOtp);
+                  } else {
+                    Navigator.of(context).pushReplacementNamed(AppRoutes.homeMap);
+                  }
                 },
               ),
             ],

@@ -16,6 +16,7 @@ class LoginOtpScreen extends StatefulWidget {
 }
 
 class _LoginOtpScreenState extends State<LoginOtpScreen> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
@@ -28,6 +29,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _nameController.dispose();
     _phoneController.dispose();
     for (var c in _otpControllers) {
       c.dispose();
@@ -55,6 +57,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   }
 
   void _sendOtp() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your full name')),
+      );
+      return;
+    }
+
     final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '').trim();
     if (phone.length != 10) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,6 +107,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   }
 
   void _verifyOtp() async {
+    final name = _nameController.text.trim();
     final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '').trim();
     final otp = _otpControllers.map((c) => c.text).join();
     if (otp.length < 6) return;
@@ -117,7 +128,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         await appState.supabaseService.client?.auth.refreshSession();
       }
 
-      final hasSavedRole = await appState.login(phone); // fetch profile
+      final hasSavedRole = await appState.login(phone, name); // fetch profile
 
       if (mounted) {
         setState(() {
@@ -208,6 +219,28 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      AppStateScope.of(context).translate('full_name'),
+                      style: AppTypography.labelBold.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameController,
+                      enabled: !_otpSent,
+                      style: AppTypography.bodyMd.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: AppStateScope.of(context).translate('enter_name'),
+                        prefixIcon: const Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Text(
                       AppStateScope.of(context).translate('mobile_no'),
                       style: AppTypography.labelBold.copyWith(
