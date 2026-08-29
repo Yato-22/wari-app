@@ -136,9 +136,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     final allFacilities = appState.facilities;
     final filteredFacilities = _getFilteredFacilities(allFacilities);
 
-    if (_selectedFacility == null && filteredFacilities.isNotEmpty) {
-      _selectedFacility = filteredFacilities.first;
-    }
+    // Remove the forced selection so the dialogue can be dismissed
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -233,7 +231,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
           // 3. Floating Action Buttons (Right)
           Positioned(
             right: 16,
-            bottom: _selectedFacility != null ? 240 : 90,
+            bottom: _selectedFacility != null ? 220 : 16,
             child: Column(
               children: [
                 _buildMapActionButton(
@@ -277,7 +275,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
 
           // 4. Last Updated Pill
           Positioned(
-            bottom: _selectedFacility != null ? 220 : 80,
+            bottom: _selectedFacility != null ? 200 : 16,
             left: 0,
             right: 0,
             child: Center(
@@ -319,7 +317,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             Positioned(
               left: 16,
               right: 16,
-              bottom: 80,
+              bottom: 16,
               child: FacilityCard(
                 facility: _selectedFacility!,
                 onClose: () {
