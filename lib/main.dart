@@ -1,29 +1,54 @@
 import 'package:flutter/material.dart';
-
-import 'Screens/language_selection_screen.dart';
 import 'theme/app_theme.dart';
+import 'navigation/app_routes.dart';
+import 'models/app_state.dart';
 
 void main() {
-  runApp(const WariApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const WariConnectApp());
 }
 
-class WariApp extends StatelessWidget {
-  const WariApp({super.key});
+class WariConnectApp extends StatefulWidget {
+  const WariConnectApp({super.key});
+
+  @override
+  State<WariConnectApp> createState() => _WariConnectAppState();
+}
+
+class _WariConnectAppState extends State<WariConnectApp> {
+  final AppState _appState = AppState();
+
+  @override
+  void dispose() {
+    _appState.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'WariConnect',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppTheme.saffronPrimary,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: AppTheme.creamBackground,
-        useMaterial3: true,
+    return AppStateScope(
+      appState: _appState,
+      child: MaterialApp(
+        title: 'WariConnect - Vithala Guide',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        initialRoute: AppRoutes.homeMap,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
-      home: const LanguageSelectionScreen(),
     );
   }
 }
+
+class AppStateScope extends InheritedNotifier<AppState> {
+  const AppStateScope({
+    super.key,
+    required AppState appState,
+    required super.child,
+  }) : super(notifier: appState);
+
+  static AppState of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<AppStateScope>();
+    return scope?.notifier ?? AppState();
+  }
+}
+

@@ -1,0 +1,405 @@
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../widgets/app_top_bar.dart';
+import '../widgets/app_bottom_nav_bar.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_text_field.dart';
+import '../models/issue_report.dart';
+import '../navigation/app_routes.dart';
+
+class ReportIssueScreen extends StatefulWidget {
+  final String? preselectedCampId;
+
+  const ReportIssueScreen({super.key, this.preselectedCampId});
+
+  @override
+  State<ReportIssueScreen> createState() => _ReportIssueScreenState();
+}
+
+class _ReportIssueScreenState extends State<ReportIssueScreen> {
+  String _selectedCamp = 'Vitthal Rukmini Anna Chhatra (Saswad Stop)';
+  IssueCategory _selectedCategory = IssueCategory.waterShortage;
+  IssueSeverity _selectedSeverity = IssueSeverity.medium;
+  final TextEditingController _descController = TextEditingController();
+  bool _hasPhotoAttached = false;
+  bool _isLoading = false;
+
+  final List<String> _camps = [
+    'Vitthal Rukmini Anna Chhatra (Saswad Stop)',
+    'Shree Medical Seva Camp (Jejuri Bypass)',
+    'Sant Dnyaneshwar Water Point (Valhe)',
+    'Pandharpur Seva Sanitation Camp (Lonand)',
+    'General Pilgrimage Route / Other',
+  ];
+
+  @override
+  void dispose() {
+    _descController.dispose();
+    super.dispose();
+  }
+
+  void _submitReport() {
+    if (_descController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please describe the issue')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.reportSubmitted,
+          arguments: {
+            'reportId': '#REP-${(1000 + (DateTime.now().millisecondsSinceEpoch % 9000))}',
+            'campName': _selectedCamp,
+          },
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: const AppTopBar(
+        customTitle: 'Report Issue / तक्रार नोंदवा',
+        showBackButton: true,
+        showSosButton: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Camp / Location Selector Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                  boxShadow: const [AppColors.tactileSaffronShadow],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'LOCATION / CAMP',
+                          style: AppTypography.labelBold.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(AppRoutes.qrScanner);
+                          },
+                          icon: const Icon(Icons.qr_code_scanner, size: 16),
+                          label: Text(
+                            'Scan QR',
+                            style: AppTypography.labelBold.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.outlineVariant),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedCamp,
+                          isExpanded: true,
+                          icon: const Icon(Icons.expand_more, color: AppColors.primary),
+                          items: _camps.map((camp) {
+                            return DropdownMenuItem(
+                              value: camp,
+                              child: Text(
+                                camp,
+                                style: AppTypography.bodySm.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.onSurface,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _selectedCamp = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Category Selector
+              Text(
+                'ISSUE CATEGORY / समस्येचा प्रकार',
+                style: AppTypography.labelBold.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: IssueCategory.values.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primaryContainer
+                            : AppColors.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.outlineVariant.withValues(alpha: 0.5),
+                        ),
+                        boxShadow: isSelected ? const [AppColors.tactileSaffronShadow] : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getIcon(category),
+                            size: 16,
+                            color: isSelected
+                                ? AppColors.onPrimaryContainer
+                                : AppColors.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            category.label,
+                            style: AppTypography.labelBold.copyWith(
+                              fontSize: 12,
+                              color: isSelected
+                                  ? AppColors.onPrimaryContainer
+                                  : AppColors.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Severity Selector
+              Text(
+                'URGENCY LEVEL / तीव्रता',
+                style: AppTypography.labelBold.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: IssueSeverity.values.map((sev) {
+                  final isSelected = _selectedSeverity == sev;
+                  Color activeColor;
+                  switch (sev) {
+                    case IssueSeverity.low:
+                      activeColor = AppColors.statusOpenText;
+                      break;
+                    case IssueSeverity.medium:
+                      activeColor = AppColors.statusBusyText;
+                      break;
+                    case IssueSeverity.critical:
+                      activeColor = AppColors.error;
+                      break;
+                  }
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedSeverity = sev;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? activeColor.withValues(alpha: 0.15)
+                                : AppColors.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected ? activeColor : AppColors.outlineVariant,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              sev.label.split(' ')[0],
+                              style: AppTypography.labelBold.copyWith(
+                                color: isSelected ? activeColor : AppColors.onSurfaceVariant,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Description Field
+              CustomTextField(
+                label: 'DESCRIPTION / तपशील',
+                hintText: 'Describe the issue, landmark, or specific assistance required...',
+                controller: _descController,
+                maxLines: 4,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Photo Attachment Container
+              Text(
+                'ATTACH PHOTO (OPTIONAL)',
+                style: AppTypography.labelBold.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _hasPhotoAttached = !_hasPhotoAttached;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_hasPhotoAttached ? 'Photo attached' : 'Photo removed'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _hasPhotoAttached ? AppColors.primaryContainer : AppColors.outlineVariant,
+                      style: BorderStyle.solid,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: _hasPhotoAttached
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_circle, color: AppColors.statusOpenText),
+                              const SizedBox(width: 8),
+                              Text(
+                                'obstacle_photo_01.jpg attached',
+                                style: AppTypography.labelBold.copyWith(
+                                  color: AppColors.statusOpenText,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_a_photo_outlined, color: AppColors.primary),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Tap to take or upload a photo',
+                                style: AppTypography.bodySm.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              CustomButton(
+                label: 'Submit Report / तक्रार पाठवा',
+                icon: Icons.send,
+                isLoading: _isLoading,
+                onPressed: _submitReport,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+    );
+  }
+
+  IconData _getIcon(IssueCategory cat) {
+    switch (cat) {
+      case IssueCategory.waterShortage:
+        return Icons.water_drop;
+      case IssueCategory.medicalEmergency:
+        return Icons.medical_services;
+      case IssueCategory.sanitation:
+        return Icons.wc;
+      case IssueCategory.crowdBlockage:
+        return Icons.groups;
+      case IssueCategory.lostPerson:
+        return Icons.person_off;
+      case IssueCategory.foodQuality:
+        return Icons.restaurant;
+      case IssueCategory.other:
+        return Icons.more_horiz;
+    }
+  }
+}
+

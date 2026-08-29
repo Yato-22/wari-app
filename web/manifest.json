@@ -1,11 +1,11 @@
 {
-    "name": "test",
-    "short_name": "test",
+    "name": "WariConnect - Vithala Guide",
+    "short_name": "WariConnect",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFF8F5",
+    "theme_color": "#8F4E00",
+    "description": "WariConnect - Vithala Guide: A comprehensive pilgrimage companion app for Pandharpur Wari.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
