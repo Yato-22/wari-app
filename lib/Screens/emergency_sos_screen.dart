@@ -3,6 +3,10 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../models/app_state.dart';
+import '../models/camp_facility.dart';
+import '../services/location_service.dart';
+import '../navigation/app_routes.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EmergencySosScreen extends StatefulWidget {
@@ -15,6 +19,56 @@ class EmergencySosScreen extends StatefulWidget {
 class _EmergencySosScreenState extends State<EmergencySosScreen> {
   bool _sosBroadcastActive = false;
   bool _isLoading = false;
+  CampFacility? _nearestMedicalCamp;
+  double _distanceToCamp = 0;
+  bool _calculatingNearest = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _findNearestMedicalCamp();
+  }
+
+  Future<void> _findNearestMedicalCamp() async {
+    final appState = AppStateScope.of(context);
+    final medicalCamps = appState.facilities.where((f) => f.type == FacilityType.medical).toList();
+
+    Future.microtask(() async {
+      if (medicalCamps.isEmpty) {
+        if (mounted) setState(() => _calculatingNearest = false);
+        return;
+      }
+      
+      final locationResult = await LocationService.getCurrentPosition();
+      if (locationResult.isSuccess && locationResult.position != null) {
+        final userLoc = LatLng(locationResult.position!.latitude, locationResult.position!.longitude);
+        const distance = Distance();
+        CampFacility? nearest;
+        double minDistance = double.infinity;
+        
+        for (var camp in medicalCamps) {
+          final campLoc = LatLng(camp.latitude, camp.longitude);
+          final dist = distance.as(LengthUnit.Meter, userLoc, campLoc);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearest = camp;
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _nearestMedicalCamp = nearest;
+            _distanceToCamp = minDistance / 1000.0; // km
+            _calculatingNearest = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _calculatingNearest = false);
+        }
+      }
+    });
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     // Remove any non-digit characters except the plus sign
@@ -302,12 +356,27 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
               ),
               const SizedBox(height: 12),
 
-              _buildNearbyServiceCard(
-                title: 'Shree Sant Tukaram Medical Base Camp',
-                distance: '0.3 km away',
-                category: 'Doctor & Trauma Care',
-                phone: '+91 94220 55667',
-              ),
+              if (_calculatingNearest)
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_nearestMedicalCamp != null)
+                _buildNearbyServiceCard(
+                  title: _nearestMedicalCamp!.name,
+                  distance: '${_distanceToCamp.toStringAsFixed(1)} km away',
+                  category: 'Nearest Medical Camp',
+                  phone: _nearestMedicalCamp!.contactPhone.isNotEmpty ? _nearestMedicalCamp!.contactPhone : '108',
+                  campId: _nearestMedicalCamp!.id,
+                )
+              else
+                _buildNearbyServiceCard(
+                  title: 'Shree Sant Tukaram Medical Base Camp',
+                  distance: '0.3 km away',
+                  category: 'Doctor & Trauma Care',
+                  phone: '+91 94220 55667',
+                  campId: null,
+                ),
               const SizedBox(height: 12),
               _buildNearbyServiceCard(
                 title: 'Saswad Police Mobile Chowki',
@@ -394,6 +463,7 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
     required String distance,
     required String category,
     required String phone,
+    String? campId,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -451,12 +521,19 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Starting GPS navigation to $title...')),
-                    );
+                    if (campId != null) {
+                      Navigator.of(context).pushReplacementNamed(
+                        AppRoutes.homeMap,
+                        arguments: {'destinationCampId': campId},
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Starting GPS navigation to $title...')),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.navigation, size: 16),
-                  label: const Text('Navigate'),
+                  label: Text(AppStateScope.of(context).translate('navigate')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

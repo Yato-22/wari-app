@@ -15,7 +15,9 @@ import '../services/routing_service.dart';
 import '../services/location_service.dart';
 
 class HomeMapScreen extends StatefulWidget {
-  const HomeMapScreen({super.key});
+  final String? destinationCampId;
+
+  const HomeMapScreen({super.key, this.destinationCampId});
 
   @override
   State<HomeMapScreen> createState() => _HomeMapScreenState();
@@ -54,6 +56,11 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   LatLng? _userLocation;
   StreamSubscription<Position>? _positionStreamSubscription;
   bool _isLocationEnabled = false;
+
+  // --- Active Navigation state ---
+  CampFacility? _activeNavigationDestination;
+  NavigationRoute? _activeNavigationRoute;
+  bool _isCalculatingNavigation = false;
 
   // Real geographical Palkhi pilgrimage route waypoints from Alandi to Pandharpur
   static const List<LatLng> _palkhiRouteWaypoints = [
@@ -94,8 +101,12 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     // Fetch the road-snapped route
     _fetchRoadRoute();
 
-    // Initialize live location
-    _initializeLocation();
+    // Initialize live location and check for incoming navigation intent
+    _initializeLocation().then((_) {
+      if (widget.destinationCampId != null) {
+        _startNavigationToCampId(widget.destinationCampId!);
+      }
+    });
   }
 
   @override
@@ -155,9 +166,70 @@ class _HomeMapScreenState extends State<HomeMapScreen>
           setState(() {
             _userLocation = LatLng(position.latitude, position.longitude);
           });
+          // Recalculate route periodically if needed, but for now just update user marker
         }
       });
     }
+  }
+
+  void _startNavigationToCampId(String campId) {
+    // We need to wait for AppState to be available
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      final appState = AppStateScope.of(context);
+      try {
+        final camp = appState.facilities.firstWhere((f) => f.id == campId);
+        _startNavigation(camp);
+      } catch (e) {
+        // Camp not found
+      }
+    });
+  }
+
+  void _startNavigation(CampFacility destination) async {
+    if (_userLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enable location services to navigate.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _activeNavigationDestination = destination;
+      _isCalculatingNavigation = true;
+      _selectedFacility = null;
+    });
+
+    final destLoc = LatLng(destination.latitude, destination.longitude);
+    final route = await RoutingService.fetchNavigationRoute(_userLocation!, destLoc, profile: 'driving');
+
+    if (mounted) {
+      setState(() {
+        _isCalculatingNavigation = false;
+        _activeNavigationRoute = route;
+      });
+
+      if (route == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStateScope.of(context).translate('no_route_found'))),
+        );
+      } else {
+        // Zoom to fit both user and destination
+        final bounds = LatLngBounds.fromPoints([_userLocation!, destLoc]);
+        _mapController.fitCamera(CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50),
+        ));
+      }
+    }
+  }
+
+  void _cancelNavigation() {
+    setState(() {
+      _activeNavigationDestination = null;
+      _activeNavigationRoute = null;
+      _isCalculatingNavigation = false;
+    });
   }
 
   /// Centers the map on the user's current location.
@@ -300,7 +372,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               ),
             ),
 
-          // 2. Floating Top Controls (Filter Chips)
+          // 2. Floating Top Controls (Filter Chips & Navigation Info)
           Positioned(
             top: 12,
             left: 16,
@@ -308,6 +380,95 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_isCalculatingNavigation)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [AppColors.tactileSaffronShadow],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          appState.translate('calculating_route'),
+                          style: AppTypography.labelBold.copyWith(
+                            color: AppColors.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (_activeNavigationRoute != null && _activeNavigationDestination != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary, width: 2),
+                      boxShadow: const [AppColors.tactileSaffronShadowElevated],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _activeNavigationDestination!.name,
+                                style: AppTypography.headlineLgMobile.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: _cancelNavigation,
+                              child: const Icon(Icons.close, color: AppColors.error),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.route, size: 16, color: AppColors.secondary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${(_activeNavigationRoute!.distanceMeters / 1000).toStringAsFixed(1)} km',
+                                  style: AppTypography.labelBold,
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.timer, size: 16, color: AppColors.secondary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${(_activeNavigationRoute!.durationSeconds / 60).toStringAsFixed(0)} min',
+                                  style: AppTypography.labelBold,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Filter Chips
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -439,18 +600,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
                   });
                 },
                 onNavigate: () {
-                  _mapController.move(
-                    LatLng(_selectedFacility!.latitude,
-                        _selectedFacility!.longitude),
-                    15.0,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: AppColors.primary,
-                      content:
-                          Text('Navigating to ${_selectedFacility!.name}...'),
-                    ),
-                  );
+                  _startNavigation(_selectedFacility!);
                 },
                 onReportIssue: () {
                   Navigator.of(context).pushNamed(
@@ -605,6 +755,23 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             ),
           ],
         ),
+
+        // Active Navigation Route Polyline (rendered on top of others)
+        if (_activeNavigationRoute != null)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: _activeNavigationRoute!.points,
+                color: Colors.blueAccent.withValues(alpha: 0.6),
+                strokeWidth: 8.0,
+              ),
+              Polyline(
+                points: _activeNavigationRoute!.points,
+                color: Colors.blue.shade800,
+                strokeWidth: 4.0,
+              ),
+            ],
+          ),
 
         // Markers: Live Palkhi + Camp Facilities + User Location
         MarkerLayer(

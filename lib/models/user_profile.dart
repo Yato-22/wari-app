@@ -104,11 +104,11 @@ class UserProfile {
 
   // --- Backwards-compatible aliases used by SupabaseService ---
 
-  /// Alias for [fromMap] — accepts a Map<String, dynamic> (e.g. Supabase row).
+  /// Alias for [fromMap] — accepts a Map&lt;String, dynamic&gt; (e.g. Supabase row).
   factory UserProfile.fromJson(Map<String, dynamic> json) =>
       UserProfile.fromMap(json);
 
-  /// Alias for [toMap] — returns a Map<String, dynamic> for Supabase writes.
+  /// Alias for [toMap] — returns a Map&lt;String, dynamic&gt; for Supabase writes.
   Map<String, dynamic> toJson() => toMap();
 
   // --- copyWith ---
