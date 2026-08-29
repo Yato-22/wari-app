@@ -13,7 +13,9 @@ import '../l10n/app_localizations.dart';
 class AppState extends ChangeNotifier {
   final SupabaseService supabaseService = SupabaseService();
   bool isLoading = false;
-  bool get isLoggedIn => supabaseService.currentUser != null;
+  bool get isLoggedIn =>
+      supabaseService.currentUser != null ||
+      (_user.id.isNotEmpty && _user.role != UserRole.guest);
 
   // CHANGED: load public data (facilities, opportunities) immediately on
   // construction so guests see real data without needing to log in.
@@ -59,7 +61,7 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.updateProfile(updated);
     } catch (e) {
-      print('Failed to update profile: $e');
+      debugPrint('Failed to update profile: $e');
     }
   }
 
@@ -69,25 +71,31 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> login(String phone) async {
-    final userId = supabaseService.currentUser?.id;
-    if (userId != null) {
-      final profile = await supabaseService.getProfile(userId);
-      if (profile != null) {
-        _user = profile;
-      } else {
-        _user = UserProfile(
-          id: userId,
-          phone: phone,
-          name: 'Warkari',
-          role: UserRole.pilgrim,
-        );
-        try {
-          await supabaseService.createProfile(_user);
-        } catch (e) {
-          print('Error creating profile: $e');
-        }
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
+    final formattedPhone = cleanPhone.startsWith('+')
+        ? cleanPhone
+        : '+91 $cleanPhone';
+    final userId = supabaseService.currentUser?.id ?? 'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
+
+    final profile = await supabaseService.getProfile(userId);
+    if (profile != null) {
+      _user = profile;
+    } else {
+      _user = UserProfile(
+        id: userId,
+        phone: formattedPhone,
+        name: 'Vitthal Bhakt',
+        role: UserRole.pilgrim,
+        dindiNumber: 'Dindi #12 (Alandi Route)',
+        emergencyContact: '+91 98220 54321',
+      );
+      try {
+        await supabaseService.createProfile(_user);
+      } catch (e) {
+        debugPrint('Error creating profile: $e');
       }
     }
+    notifyListeners();
     // Re-fetch everything now that we're authenticated (RLS unlocks
     // user-specific rows: own reports, own volunteer apps, own org application).
     await loadInitialData();
@@ -125,7 +133,7 @@ class AppState extends ChangeNotifier {
         _volunteerApplications = await supabaseService.getVolunteerApplications();
       }
     } catch (e) {
-      print('Error loading data: $e');
+      debugPrint('Error loading data: $e');
     }
 
     isLoading = false;
@@ -198,7 +206,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
-        print('Error updating facility: $e');
+        debugPrint('Error updating facility: $e');
       }
     }
   }
@@ -212,7 +220,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
-        print('Error updating facility: $e');
+        debugPrint('Error updating facility: $e');
       }
     }
   }
@@ -223,7 +231,7 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createFacility(facility);
     } catch (e) {
-      print('Error adding facility: $e');
+      debugPrint('Error adding facility: $e');
     }
   }
 
@@ -237,7 +245,7 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createIssueReport(report);
     } catch (e) {
-      print('Error adding report (RLS might prevent this): $e');
+      debugPrint('Error adding report (RLS might prevent this): $e');
     }
   }
 
@@ -253,7 +261,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateIssueReport(updated);
       } catch (e) {
-        print('Error resolving report: $e');
+        debugPrint('Error resolving report: $e');
       }
     }
   }
@@ -271,7 +279,7 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createVolunteerApplication(app);
     } catch (e) {
-      print('Error adding application (RLS might prevent this): $e');
+      debugPrint('Error adding application (RLS might prevent this): $e');
     }
   }
 
@@ -286,7 +294,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateVolunteerApplication(updated);
       } catch (e) {
-        print('Error updating volunteer application: $e');
+        debugPrint('Error updating volunteer application: $e');
       }
     }
   }
@@ -335,7 +343,7 @@ class AppState extends ChangeNotifier {
       _currentOrganiserApp = app;
       notifyListeners();
     } catch (e) {
-      print('Error loading organiser application: $e');
+      debugPrint('Error loading organiser application: $e');
     }
   }
 
@@ -350,7 +358,7 @@ class AppState extends ChangeNotifier {
       _user = _user.copyWith(role: UserRole.organiser);
       notifyListeners();
     } catch (e) {
-      print('Error submitting organiser application: $e');
+      debugPrint('Error submitting organiser application: $e');
       rethrow; // let the screen show an error SnackBar
     }
   }

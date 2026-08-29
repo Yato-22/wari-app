@@ -257,7 +257,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
         children: [
           // 1. OpenStreetMap Tile Layer Canvas
           Positioned.fill(
-            child: _buildOpenStreetMap(filteredFacilities),
+            child: _buildOpenStreetMap(filteredFacilities, appState),
           ),
 
           // Route loading indicator
@@ -557,7 +557,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   }
 
   // --- OpenStreetMap Main View ---
-  Widget _buildOpenStreetMap(List<CampFacility> facilities) {
+  Widget _buildOpenStreetMap(List<CampFacility> facilities, AppState appState) {
     final currentLayer = _mapTileLayers[_currentMapLayerIndex];
 
     // Use road-snapped route if available, otherwise fall back to straight-line waypoints
