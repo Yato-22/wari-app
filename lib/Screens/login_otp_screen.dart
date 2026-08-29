@@ -134,18 +134,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         setState(() {
           _isLoading = false;
         });
-        if (hasSavedRole) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              backgroundColor: AppColors.statusOpenText,
-              content: Text('Login successful! Welcome back to WariConnect.'),
-            ),
-          );
-          Navigator.of(context).pushReplacementNamed(AppRoutes.homeMap);
-        } else {
-          // New user prompt for role selection
-          Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.statusOpenText,
+            content: Text('Login successful! Welcome back to WariConnect.'),
+          ),
+        );
+        // Unconditionally prompt for role selection
+        Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
       }
     } catch (e) {
       if (mounted) {
