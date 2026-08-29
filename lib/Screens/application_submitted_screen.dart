@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -83,33 +84,58 @@ class ApplicationSubmittedScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.outlineVariant),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            appId,
-                            style: AppTypography.headlineLgMobile.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w800,
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: SelectableText(
+                                appId,
+                                style: AppTypography.titleLg.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
                           ),
-                          TextButton.icon(
-                            onPressed: () {
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: appId));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Application ID copied to clipboard')),
                               );
                             },
-                            icon: const Icon(Icons.content_copy, size: 16),
-                            label: const Text('COPY'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              padding: EdgeInsets.zero,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.content_copy, size: 14, color: AppColors.primary),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'COPY',
+                                    style: AppTypography.labelBold.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -153,23 +179,30 @@ class ApplicationSubmittedScreen extends StatelessWidget {
 
   Widget _buildRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: AppColors.primary),
         const SizedBox(width: 10),
-        Text(
-          '$label: ',
-          style: AppTypography.labelBold.copyWith(
-            color: AppColors.onSurfaceVariant,
-            fontSize: 12,
-          ),
-        ),
         Expanded(
-          child: Text(
-            value,
-            style: AppTypography.bodySm.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurface,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTypography.labelBold.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: AppTypography.bodySm.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
       ],

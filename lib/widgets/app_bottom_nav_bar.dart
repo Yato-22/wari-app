@@ -27,33 +27,41 @@ class AppBottomNavBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(
-              context: context,
-              index: 0,
-              icon: Icons.map,
-              label: 'Map',
-              route: AppRoutes.homeMap,
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                index: 0,
+                icon: Icons.map,
+                label: 'Map',
+                route: AppRoutes.homeMap,
+              ),
             ),
-            _buildNavItem(
-              context: context,
-              index: 1,
-              icon: Icons.volunteer_activism,
-              label: 'Volunteer',
-              route: AppRoutes.volunteerOpportunities,
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                index: 1,
+                icon: Icons.volunteer_activism,
+                label: 'Volunteer',
+                route: AppRoutes.volunteerOpportunities,
+              ),
             ),
-            _buildNavItem(
-              context: context,
-              index: 2,
-              icon: Icons.report_problem_outlined,
-              label: 'Reports',
-              route: AppRoutes.activityTracker,
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                index: 2,
+                icon: Icons.report_problem_outlined,
+                label: 'Reports',
+                route: AppRoutes.activityTracker,
+              ),
             ),
-            _buildNavItem(
-              context: context,
-              index: 3,
-              icon: Icons.person_outline,
-              label: 'Profile',
-              route: AppRoutes.profileLoggedIn,
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                index: 3,
+                icon: Icons.person_outline,
+                label: 'Profile',
+                route: AppRoutes.profileLoggedIn,
+              ),
             ),
           ],
         ),
@@ -84,31 +92,36 @@ class AppBottomNavBar extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: isSelected
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 6)
-            : const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+            : const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(9999),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 22,
+              size: 20,
               color: isSelected
                   ? AppColors.onPrimaryContainer
                   : AppColors.onSurfaceVariant,
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: AppTypography.labelBold.copyWith(
-                fontSize: 11,
-                color: isSelected
-                    ? AppColors.onPrimaryContainer
-                    : AppColors.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                label,
+                style: AppTypography.labelBold.copyWith(
+                  fontSize: 11,
+                  color: isSelected
+                      ? AppColors.onPrimaryContainer
+                      : AppColors.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

@@ -33,6 +33,14 @@ class AppTypography {
     color: AppColors.onSurface,
   );
 
+  static const TextStyle titleLg = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 24 / 18,
+    color: AppColors.onSurface,
+  );
+
   static const TextStyle bodyMd = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -81,12 +82,15 @@ class ReportSubmittedScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'REFERENCE ID',
-                          style: AppTypography.labelBold.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                        Flexible(
+                          child: Text(
+                            'REFERENCE ID',
+                            style: AppTypography.labelBold.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
@@ -106,17 +110,26 @@ class ReportSubmittedScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Text(
-                          reportId,
-                          style: AppTypography.headlineLgMobile.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: SelectableText(
+                              reportId,
+                              style: AppTypography.titleLg.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         IconButton(
                           icon: const Icon(Icons.copy, size: 18, color: AppColors.primary),
+                          tooltip: 'Copy Report ID',
                           onPressed: () {
+                            Clipboard.setData(ClipboardData(text: reportId));
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Report ID copied to clipboard')),
                             );
