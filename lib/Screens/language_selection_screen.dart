@@ -142,35 +142,15 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                             ),
                             const SizedBox(width: 16),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item['title']!,
-                                    style: AppTypography.headlineLgMobile.copyWith(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : AppColors.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item['subtitle']!,
-                                    style: AppTypography.bodySm.copyWith(
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item['quote']!,
-                                    style: AppTypography.labelBold.copyWith(
-                                      color: AppColors.secondary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                item['title']!,
+                                style: AppTypography.headlineLgMobile.copyWith(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.onSurface,
+                                ),
                               ),
                             ),
                           ],
