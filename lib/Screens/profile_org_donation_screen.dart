@@ -4,6 +4,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_button.dart';
+import '../models/app_state.dart';
 import '../navigation/app_routes.dart';
 
 class ProfileOrgDonationScreen extends StatelessWidget {
@@ -209,12 +210,16 @@ class ProfileOrgDonationScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Logout Button
               CustomButton(
                 label: 'Logout',
                 icon: Icons.logout,
                 variant: ButtonVariant.secondary,
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.profileGuest);
+                onPressed: () async {
+                  await AppStateScope.of(context).logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacementNamed(AppRoutes.profileGuest);
+                  }
                 },
               ),
               const SizedBox(height: 16),

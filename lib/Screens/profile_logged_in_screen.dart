@@ -4,6 +4,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_button.dart';
+import '../models/app_state.dart';
 import '../navigation/app_routes.dart';
 
 class ProfileLoggedInScreen extends StatelessWidget {
@@ -11,6 +12,9 @@ class ProfileLoggedInScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appState = AppStateScope.of(context);
+    final user = appState.user;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppTopBar(
@@ -43,13 +47,11 @@ class ProfileLoggedInScreen extends StatelessWidget {
                           height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
+                            color: AppColors.primaryContainer.withValues(alpha: 0.2),
                             border: Border.all(color: AppColors.primary, width: 2),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.person, size: 36, color: AppColors.primary),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -58,14 +60,14 @@ class ProfileLoggedInScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Vitthal Bhakt',
+                                user.name.isNotEmpty ? user.name : 'Vitthal Bhakt',
                                 style: AppTypography.headlineLgMobile.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '+91 98765 43210',
+                                user.phone.isNotEmpty ? user.phone : 'Not provided',
                                 style: AppTypography.bodySm.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                 ),
@@ -78,7 +80,9 @@ class ProfileLoggedInScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(9999),
                                 ),
                                 child: Text(
-                                  'Dindi #12 • Alandi Route',
+                                  user.dindiNumber.isNotEmpty
+                                      ? user.dindiNumber
+                                      : 'Dindi #12 • Alandi Route',
                                   style: AppTypography.labelBold.copyWith(
                                     color: AppColors.primary,
                                     fontSize: 11,
@@ -273,8 +277,11 @@ class ProfileLoggedInScreen extends StatelessWidget {
                 label: 'Logout',
                 icon: Icons.logout,
                 variant: ButtonVariant.secondary,
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.profileGuest);
+                onPressed: () async {
+                  await appState.logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacementNamed(AppRoutes.profileGuest);
+                  }
                 },
               ),
               const SizedBox(height: 16),
@@ -293,36 +300,39 @@ class ProfileLoggedInScreen extends StatelessWidget {
     Widget? trailingWidget,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.primaryContainer.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: AppColors.primary, size: 22),
-      ),
-      title: Text(
-        title,
-        style: AppTypography.labelBold.copyWith(
-          fontSize: 15,
-          color: AppColors.onSurface,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AppTypography.bodySm.copyWith(
-          fontSize: 12,
-          color: AppColors.onSurfaceVariant,
-        ),
-      ),
-      trailing: trailingWidget ??
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.outline,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
           ),
-      onTap: onTap,
+          child: Icon(icon, color: AppColors.primary, size: 22),
+        ),
+        title: Text(
+          title,
+          style: AppTypography.labelBold.copyWith(
+            fontSize: 15,
+            color: AppColors.onSurface,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.bodySm.copyWith(
+            fontSize: 12,
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        trailing: trailingWidget ??
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.outline,
+            ),
+        onTap: onTap,
+      ),
     );
   }
 }

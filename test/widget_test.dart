@@ -1,13 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wari_connect_app/models/app_state.dart';
+import 'package:wari_connect_app/models/user_profile.dart';
 import 'package:wari_connect_app/screens/home_map_screen.dart';
 import 'package:wari_connect_app/screens/login_otp_screen.dart';
 import 'package:wari_connect_app/screens/application_submitted_screen.dart';
 import 'package:wari_connect_app/screens/report_submitted_screen.dart';
+import 'package:wari_connect_app/screens/profile_guest_screen.dart';
+import 'package:wari_connect_app/screens/profile_logged_in_screen.dart';
 import 'package:wari_connect_app/theme/app_theme.dart';
 
 void main() {
+  testWidgets('AppState starts initially in logged-out Guest state',
+      (WidgetTester tester) async {
+    final appState = AppState();
+    expect(appState.isLoggedIn, false);
+    expect(appState.user.role, UserRole.guest);
+    expect(appState.user.name, 'Guest Pilgrim');
+  });
+
+  testWidgets('ProfileGuestScreen renders for logged-out users with Login/Sign Up button',
+      (WidgetTester tester) async {
+    final appState = AppState();
+
+    await tester.pumpWidget(
+      AppStateScope(
+        appState: appState,
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const ProfileGuestScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Welcome to WariConnect'), findsOneWidget);
+    expect(find.text('Login / Sign Up'), findsOneWidget);
+    expect(find.text('Help & Support'), findsOneWidget);
+  });
+
+  testWidgets('ProfileLoggedInScreen renders dynamic user profile and logout action',
+      (WidgetTester tester) async {
+    final appState = AppState();
+    await appState.login('9876543210');
+    expect(appState.isLoggedIn, true);
+
+    await tester.pumpWidget(
+      AppStateScope(
+        appState: appState,
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const ProfileLoggedInScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Vitthal Bhakt'), findsOneWidget);
+    expect(find.text('+91 9876543210'), findsOneWidget);
+    expect(find.text('Logout'), findsOneWidget);
+  });
+
   testWidgets('LoginOtpScreen renders with digits-only phone input and no +91 badge',
       (WidgetTester tester) async {
     final appState = AppState();
@@ -93,6 +146,7 @@ void main() {
     expect(find.text('REFERENCE ID'), findsOneWidget);
   });
 }
+
 
 
 

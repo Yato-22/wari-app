@@ -133,35 +133,38 @@ class ProfileGuestScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.primaryContainer.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 22),
         ),
-        child: Icon(icon, color: AppColors.primary, size: 22),
-      ),
-      title: Text(
-        title,
-        style: AppTypography.labelBold.copyWith(
-          fontSize: 15,
-          color: AppColors.onSurface,
+        title: Text(
+          title,
+          style: AppTypography.labelBold.copyWith(
+            fontSize: 15,
+            color: AppColors.onSurface,
+          ),
         ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AppTypography.bodySm.copyWith(
-          fontSize: 12,
-          color: AppColors.onSurfaceVariant,
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.bodySm.copyWith(
+            fontSize: 12,
+            color: AppColors.onSurfaceVariant,
+          ),
         ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppColors.outline,
+        ),
+        onTap: onTap,
       ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: AppColors.outline,
-      ),
-      onTap: onTap,
     );
   }
 }

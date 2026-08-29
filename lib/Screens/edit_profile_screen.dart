@@ -5,6 +5,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import '../models/app_state.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,14 +15,33 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Vitthal Bhakt');
-  final TextEditingController _phoneController = TextEditingController(text: '9876543210');
-  final TextEditingController _emergencyContactController = TextEditingController(text: '9822054321');
-  final TextEditingController _dindiController = TextEditingController(text: 'Dindi #12 (Alandi Route)');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emergencyContactController = TextEditingController();
+  final TextEditingController _dindiController = TextEditingController();
   String _selectedBloodGroup = 'O+';
   bool _isLoading = false;
+  bool _initialized = false;
 
   final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final user = AppStateScope.of(context).user;
+      if (user.name.isNotEmpty) _nameController.text = user.name;
+      if (user.phone.isNotEmpty) {
+        _phoneController.text = user.phone.replaceAll(RegExp(r'\D'), '');
+      }
+      if (user.emergencyContact.isNotEmpty) {
+        _emergencyContactController.text = user.emergencyContact.replaceAll(RegExp(r'\D'), '');
+      }
+      if (user.dindiNumber.isNotEmpty) _dindiController.text = user.dindiNumber;
+      if (user.bloodGroup.isNotEmpty) _selectedBloodGroup = user.bloodGroup;
+      _initialized = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -37,7 +57,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 600), () {
+    final appState = AppStateScope.of(context);
+    final user = appState.user;
+    final updated = user.copyWith(
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      emergencyContact: _emergencyContactController.text.trim(),
+      dindiNumber: _dindiController.text.trim(),
+      bloodGroup: _selectedBloodGroup,
+    );
+    appState.updateUserProfile(updated);
+
+    Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) {
         setState(() {
           _isLoading = false;

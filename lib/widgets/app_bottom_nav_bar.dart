@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../models/app_state.dart';
+import '../models/user_profile.dart';
 import '../navigation/app_routes.dart';
 
 class AppBottomNavBar extends StatelessWidget {
@@ -60,7 +62,7 @@ class AppBottomNavBar extends StatelessWidget {
                 index: 3,
                 icon: Icons.person_outline,
                 label: 'Profile',
-                route: AppRoutes.profileLoggedIn,
+                route: AppRoutes.profileGuest,
               ),
             ),
           ],
@@ -84,7 +86,20 @@ class AppBottomNavBar extends StatelessWidget {
           onTap!(index);
         } else {
           if (!isSelected) {
-            Navigator.of(context).pushReplacementNamed(route);
+            if (index == 3) {
+              final appState = AppStateScope.of(context);
+              if (appState.isLoggedIn) {
+                if (appState.user.role == UserRole.organiser) {
+                  Navigator.of(context).pushReplacementNamed(AppRoutes.profileOrgManagement);
+                } else {
+                  Navigator.of(context).pushReplacementNamed(AppRoutes.profileLoggedIn);
+                }
+              } else {
+                Navigator.of(context).pushReplacementNamed(AppRoutes.profileGuest);
+              }
+            } else {
+              Navigator.of(context).pushReplacementNamed(route);
+            }
           }
         }
       },

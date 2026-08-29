@@ -28,16 +28,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // User Profile
+  // User Profile (Default: Logged out Guest)
   UserProfile _user = const UserProfile(
-    id: 'usr-101',
-    name: 'Vitthal Bhakt',
-    phone: '+91 98765 43210',
-    email: 'vitthal.bhakt@warkari.org',
-    dindiNumber: 'Dindi #12',
-    role: UserRole.pilgrim,
+    id: '',
+    name: 'Guest Pilgrim',
+    phone: '',
+    role: UserRole.guest,
   );
   UserProfile get user => _user;
+  bool get isLoggedIn => _user.id.isNotEmpty && _user.role != UserRole.guest;
 
   void updateUserProfile(UserProfile updated) async {
     _user = updated;
@@ -57,26 +56,32 @@ class AppState extends ChangeNotifier {
 
   Future<void> login(String phone) async {
     // This is called after OTP is verified
-    final userId = supabaseService.currentUser?.id;
-    if (userId != null) {
-      final profile = await supabaseService.getProfile(userId);
-      if (profile != null) {
-        _user = profile;
-      } else {
-        // Create new profile
-        _user = UserProfile(
-          id: userId,
-          phone: phone,
-          name: 'Warkari',
-          role: UserRole.pilgrim,
-        );
-        try {
-          await supabaseService.createProfile(_user);
-        } catch (e) {
-          debugPrint('Error creating profile: $e');
-        }
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
+    final formattedPhone = cleanPhone.startsWith('+')
+        ? cleanPhone
+        : '+91 $cleanPhone';
+    final userId = supabaseService.currentUser?.id ?? 'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
+
+    final profile = await supabaseService.getProfile(userId);
+    if (profile != null) {
+      _user = profile;
+    } else {
+      // Create new profile
+      _user = UserProfile(
+        id: userId,
+        phone: formattedPhone,
+        name: 'Vitthal Bhakt',
+        role: UserRole.pilgrim,
+        dindiNumber: 'Dindi #12 (Alandi Route)',
+        emergencyContact: '+91 98220 54321',
+      );
+      try {
+        await supabaseService.createProfile(_user);
+      } catch (e) {
+        debugPrint('Error creating profile: $e');
       }
     }
+    notifyListeners();
     await loadInitialData();
   }
 
