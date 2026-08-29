@@ -614,7 +614,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               point: _livePalkhiLocation,
               width: 90,
               height: 90,
-              child: _buildLivePalkhiMarker(),
+              child: _buildLivePalkhiMarker(appState),
             ),
 
             // 2. User Location Marker (blue dot)
@@ -715,7 +715,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   }
 
   // --- Live Palkhi Marker Widget ---
-  Widget _buildLivePalkhiMarker() {
+  Widget _buildLivePalkhiMarker(AppState appState) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
