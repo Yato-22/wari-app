@@ -103,7 +103,16 @@ class AppState extends ChangeNotifier {
 
     final profile = await supabaseService.getProfile(userId);
     if (profile != null) {
-      _user = profile;
+      if (name.trim().isNotEmpty && profile.displayName != name.trim()) {
+        _user = profile.copyWith(displayName: name.trim());
+        try {
+          await supabaseService.updateProfile(_user);
+        } catch (e) {
+          debugPrint('Error updating profile name during login: $e');
+        }
+      } else {
+        _user = profile;
+      }
       _authState = AuthenticationState.authenticated;
       notifyListeners();
       await loadInitialData();
