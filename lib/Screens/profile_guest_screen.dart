@@ -37,10 +37,10 @@ class ProfileGuestScreen extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.account_circle,
-                    size: 80,
-                    color: AppColors.outline,
+                  child: const CircleAvatar(
+                    radius: 45,
+                    backgroundImage: AssetImage('assets/images/logo.png'),
+                    backgroundColor: Colors.transparent,
                   ),
                 ),
               ),

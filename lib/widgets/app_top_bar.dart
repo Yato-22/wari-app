@@ -47,10 +47,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.auto_awesome,
-                  color: AppColors.primary,
-                  size: 24,
+                const CircleAvatar(
+                  radius: 14,
+                  backgroundImage: AssetImage('assets/images/logo.png'),
+                  backgroundColor: Colors.transparent,
                 ),
                 const SizedBox(width: 6),
                 RichText(
