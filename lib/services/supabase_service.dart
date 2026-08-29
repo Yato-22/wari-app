@@ -217,6 +217,79 @@ class SupabaseService {
     return app; // Fallback
   }
 
+  // BACKEND RPC & MANAGEMENT METHODS
+
+  /// Fetches dashboard statistics for a camp (uses Supabase RPC function).
+  Future<Map<String, dynamic>> fetchCampStats(String campId) async {
+    final client = _client;
+    if (client == null) return {};
+    try {
+      final response = await client.rpc(
+        'get_camp_stats',
+        params: {'target_camp_id': campId},
+      );
+      return Map<String, dynamic>.from(response as Map);
+    } catch (e) {
+      debugPrint('Error fetching camp stats: $e');
+      return {};
+    }
+  }
+
+  /// Marks an issue report as resolved or in-progress (uses Supabase RPC function).
+  Future<void> resolveCampIssue(String issueId, {String status = 'resolved'}) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    try {
+      await client.rpc(
+        'resolve_issue_report',
+        params: {
+          'target_issue_id': issueId,
+          'resolve_status': status,
+        },
+      );
+    } catch (e) {
+      debugPrint('Error resolving issue: $e');
+      rethrow;
+    }
+  }
+
+  /// Approves or rejects a volunteer application (uses Supabase RPC function).
+  Future<void> reviewVolunteerApplication(String applicationId, String status) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    try {
+      await client.rpc(
+        'update_volunteer_application_status',
+        params: {
+          'target_application_id': applicationId,
+          'new_status': status, // 'approved' or 'rejected'
+        },
+      );
+    } catch (e) {
+      debugPrint('Error reviewing volunteer application: $e');
+      rethrow;
+    }
+  }
+
+  /// Updates camp occupancy and live status.
+  Future<void> updateCampStatus({
+    required String campId,
+    required String status,
+    required int currentCapacity,
+  }) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    try {
+      await client.from('camp_facilities').update({
+        'status': status,
+        'capacity_current': currentCapacity,
+      }).eq('id', campId);
+    } catch (e) {
+      debugPrint('Error updating camp status: $e');
+      rethrow;
+    }
+  }
+
   // OTHER UTILS
   Future<void> triggerSos(double latitude, double longitude) async {
     final client = _client;
