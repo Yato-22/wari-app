@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
@@ -17,14 +19,53 @@ class HomeMapScreen extends StatefulWidget {
 
 class _HomeMapScreenState extends State<HomeMapScreen>
     with SingleTickerProviderStateMixin {
+  final MapController _mapController = MapController();
   FacilityType _selectedFilter = FacilityType.all;
   CampFacility? _selectedFacility;
   final TextEditingController _searchController = TextEditingController();
-  final TransformationController _transformationController =
-      TransformationController();
+
+  int _currentMapLayerIndex = 0;
+  final List<Map<String, String>> _mapTileLayers = [
+    {
+      'name': 'OpenStreetMap Standard',
+      'url': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    },
+    {
+      'name': 'OSM Humanitarian (HOT)',
+      'url': 'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    },
+    {
+      'name': 'CartoDB Voyager (Warm)',
+      'url': 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    },
+  ];
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+
+  // Real geographical Palkhi pilgrimage route coordinates from Alandi to Pandharpur
+  static const List<LatLng> _palkhiRouteCoordinates = [
+    LatLng(18.6772, 73.8967), // Alandi (Start of Sant Dnyaneshwar Palkhi)
+    LatLng(18.5204, 73.8567), // Pune (Shivajinagar)
+    LatLng(18.5089, 73.9260), // Hadapsar
+    LatLng(18.3980, 73.9980), // Dive Ghat (Mastani Talav)
+    LatLng(18.3444, 74.0305), // Saswad (First major halt)
+    LatLng(18.2750, 74.1592), // Jejuri (Khandoba mandir)
+    LatLng(18.1722, 74.1611), // Valhe
+    LatLng(18.0428, 74.1883), // Lonand
+    LatLng(17.9944, 74.3167), // Taradgaon
+    LatLng(17.9833, 74.4333), // Phaltan
+    LatLng(17.8833, 74.5833), // Barad
+    LatLng(17.9000, 74.7833), // Natepute
+    LatLng(17.8500, 74.9000), // Malshiras
+    LatLng(17.7667, 75.0500), // Velapur
+    LatLng(17.7167, 75.2000), // Bhandishegaon
+    LatLng(17.6980, 75.2750), // Wakhari (Palkhi Ringan)
+    LatLng(17.6775, 75.3268), // Pandharpur (Shri Vitthal-Rukmini Mandir)
+  ];
+
+  // Current Live Palkhi Location
+  static const LatLng _livePalkhiLocation = LatLng(18.3444, 74.0305);
 
   @override
   void initState() {
@@ -43,7 +84,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   void dispose() {
     _pulseController.dispose();
     _searchController.dispose();
-    _transformationController.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -64,6 +105,31 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     return list;
   }
 
+  void _cycleMapLayer() {
+    setState(() {
+      _currentMapLayerIndex =
+          (_currentMapLayerIndex + 1) % _mapTileLayers.length;
+    });
+    final layerName = _mapTileLayers[_currentMapLayerIndex]['name'];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Switched to $layerName'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: AppColors.inverseSurface,
+      ),
+    );
+  }
+
+  void _centerOnLivePalkhi() {
+    _mapController.move(_livePalkhiLocation, 13.5);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Centered on Live Palkhi (Saswad - Pune Route)'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
@@ -82,12 +148,12 @@ class _HomeMapScreenState extends State<HomeMapScreen>
       ),
       body: Stack(
         children: [
-          // Interactive Pan & Zoom Map Canvas
+          // 1. OpenStreetMap Tile Layer Canvas
           Positioned.fill(
-            child: _buildInteractiveMapCanvas(filteredFacilities),
+            child: _buildOpenStreetMap(filteredFacilities),
           ),
 
-          // Floating Top Controls (Search & Filter Chips)
+          // 2. Floating Top Controls (Search & Filter Chips)
           Positioned(
             top: 12,
             left: 16,
@@ -109,14 +175,16 @@ class _HomeMapScreenState extends State<HomeMapScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: AppColors.onSurfaceVariant),
+                      const Icon(Icons.search,
+                          color: AppColors.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           onChanged: (_) => setState(() {}),
                           decoration: const InputDecoration(
-                            hintText: 'Search for facilities, camps, or Dindi...',
+                            hintText:
+                                'Search facilities, medical, water, camps...',
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
@@ -144,13 +212,17 @@ class _HomeMapScreenState extends State<HomeMapScreen>
                     children: [
                       _buildFilterChip('All', FacilityType.all, Icons.done),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Food', FacilityType.food, Icons.restaurant),
+                      _buildFilterChip(
+                          'Food', FacilityType.food, Icons.restaurant),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Water', FacilityType.water, Icons.water_drop),
+                      _buildFilterChip(
+                          'Water', FacilityType.water, Icons.water_drop),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Medical', FacilityType.medical, Icons.medical_services),
+                      _buildFilterChip(
+                          'Medical', FacilityType.medical, Icons.medical_services),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Toilet', FacilityType.toilet, Icons.wc),
+                      _buildFilterChip(
+                          'Toilet', FacilityType.toilet, Icons.wc),
                     ],
                   ),
                 ),
@@ -158,7 +230,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             ),
           ),
 
-          // Floating Action Buttons (Right)
+          // 3. Floating Action Buttons (Right)
           Positioned(
             right: 16,
             bottom: _selectedFacility != null ? 240 : 90,
@@ -166,27 +238,36 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               children: [
                 _buildMapActionButton(
                   icon: Icons.my_location,
-                  tooltip: 'Reset / Center Map',
+                  tooltip: 'Center on Live Palkhi',
+                  onTap: _centerOnLivePalkhi,
+                ),
+                const SizedBox(height: 8),
+                _buildMapActionButton(
+                  icon: Icons.layers_outlined,
+                  tooltip: 'Switch Map Layer',
+                  onTap: _cycleMapLayer,
+                ),
+                const SizedBox(height: 8),
+                _buildMapActionButton(
+                  icon: Icons.add,
+                  tooltip: 'Zoom In',
                   onTap: () {
-                    _transformationController.value = Matrix4.identity();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Centering GPS location on Palkhi Marg...'),
-                        duration: Duration(seconds: 1),
-                      ),
+                    final currentZoom = _mapController.camera.zoom;
+                    _mapController.move(
+                      _mapController.camera.center,
+                      (currentZoom + 1).clamp(6.0, 18.0),
                     );
                   },
                 ),
                 const SizedBox(height: 8),
                 _buildMapActionButton(
-                  icon: Icons.layers,
-                  tooltip: 'Map Layers',
+                  icon: Icons.remove,
+                  tooltip: 'Zoom Out',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Map View: Pilgrim Satellite & Terrain Route'),
-                        duration: Duration(seconds: 1),
-                      ),
+                    final currentZoom = _mapController.camera.zoom;
+                    _mapController.move(
+                      _mapController.camera.center,
+                      (currentZoom - 1).clamp(6.0, 18.0),
                     );
                   },
                 ),
@@ -194,31 +275,34 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             ),
           ),
 
-          // Last Updated Pill
+          // 4. Last Updated Pill
           Positioned(
             bottom: _selectedFacility != null ? 220 : 80,
             left: 0,
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.inverseSurface.withValues(alpha: 0.85),
+                  color: AppColors.inverseSurface.withValues(alpha: 0.90),
                   borderRadius: BorderRadius.circular(9999),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x20000000),
-                      blurRadius: 4,
+                      color: Color(0x30000000),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.sync, size: 14, color: AppColors.inverseOnSurface),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.sync,
+                        size: 14, color: AppColors.inverseOnSurface),
+                    const SizedBox(width: 6),
                     Text(
-                      'Live Palkhi Route • Updated 2m ago',
+                      'Live OpenStreetMap • Pandharpur Palkhi Marg',
                       style: AppTypography.labelBold.copyWith(
                         color: AppColors.inverseOnSurface,
                         fontSize: 11,
@@ -230,7 +314,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             ),
           ),
 
-          // Selected Facility Preview Card
+          // 5. Selected Facility Preview Card
           if (_selectedFacility != null)
             Positioned(
               left: 16,
@@ -244,10 +328,16 @@ class _HomeMapScreenState extends State<HomeMapScreen>
                   });
                 },
                 onNavigate: () {
+                  _mapController.move(
+                    LatLng(_selectedFacility!.latitude,
+                        _selectedFacility!.longitude),
+                    15.0,
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       backgroundColor: AppColors.primary,
-                      content: Text('Navigating to ${_selectedFacility!.name}...'),
+                      content:
+                          Text('Navigating to ${_selectedFacility!.name}...'),
                     ),
                   );
                 },
@@ -334,7 +424,8 @@ class _HomeMapScreenState extends State<HomeMapScreen>
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
+        border:
+            Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: const [AppColors.tactileSaffronShadow],
       ),
       child: IconButton(
@@ -345,222 +436,193 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     );
   }
 
-  Widget _buildInteractiveMapCanvas(List<CampFacility> facilities) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final canvasWidth = constraints.maxWidth > 600 ? constraints.maxWidth : constraints.maxWidth * 1.25;
-        final canvasHeight = constraints.maxHeight > 800 ? constraints.maxHeight : constraints.maxHeight * 1.25;
+  // --- OpenStreetMap Main View ---
+  Widget _buildOpenStreetMap(List<CampFacility> facilities) {
+    final currentLayer = _mapTileLayers[_currentMapLayerIndex];
 
-        return ClipRect(
-          child: InteractiveViewer(
-            transformationController: _transformationController,
-            boundaryMargin: const EdgeInsets.all(120),
-            minScale: 0.8,
-            maxScale: 2.5,
-            child: SizedBox(
-              width: canvasWidth,
-              height: canvasHeight,
-              child: Container(
-                color: const Color(0xFFF3ECE4),
-                child: CustomPaint(
-                  painter: _PalkhiRoutePainter(),
-                  child: Stack(
-                    children: [
-                      // Live Palkhi Marker (Pulsing)
-                      Positioned(
-                        top: canvasHeight * 0.35,
-                        left: canvasWidth * 0.45,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryContainer,
-                                borderRadius: BorderRadius.circular(9999),
-                                border: Border.all(
-                                    color: AppColors.primary, width: 1),
-                                boxShadow: const [AppColors.tactileSaffronShadow],
-                              ),
-                              child: Text(
-                                'Live Palkhi',
-                                style: AppTypography.labelBold.copyWith(
-                                  color: AppColors.onPrimaryContainer,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            ScaleTransition(
-                              scale: _pulseAnimation,
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: Colors.white, width: 2.5),
-                                  boxShadow: const [
-                                    AppColors.tactileSaffronShadowElevated
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.celebration,
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _livePalkhiLocation,
+        initialZoom: 12.5,
+        minZoom: 6.0,
+        maxZoom: 18.0,
+        onTap: (_, __) {
+          if (_selectedFacility != null) {
+            setState(() {
+              _selectedFacility = null;
+            });
+          }
+        },
+      ),
+      children: [
+        // OpenStreetMap Tile Layer
+        TileLayer(
+          urlTemplate: currentLayer['url']!,
+          userAgentPackageName: 'org.warkari.wariconnect',
+          maxZoom: 19,
+        ),
 
-                      // Dynamic Facility Pins
-                      ...facilities.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final facility = entry.value;
-                        final isSelected = _selectedFacility?.id == facility.id;
+        // Palkhi Pilgrimage Route Polyline
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: _palkhiRouteCoordinates,
+              color: const Color(0xFF8F4E00).withValues(alpha: 0.4),
+              strokeWidth: 7.0,
+            ),
+            Polyline(
+              points: _palkhiRouteCoordinates,
+              color: AppColors.primaryContainer,
+              strokeWidth: 4.0,
+              borderColor: AppColors.primary,
+              borderStrokeWidth: 1.0,
+            ),
+          ],
+        ),
 
-                        // Calculate visual coordinate on canvas
-                        double topRatio = 0.45;
-                        double leftRatio = 0.30;
+        // Markers: Live Palkhi + Camp Facilities
+        MarkerLayer(
+          markers: [
+            // 1. Live Palkhi Pulsing Marker
+            Marker(
+              point: _livePalkhiLocation,
+              width: 90,
+              height: 90,
+              child: _buildLivePalkhiMarker(),
+            ),
 
-                        if (facility.type == FacilityType.medical) {
-                          topRatio = 0.42;
-                          leftRatio = 0.68;
-                        } else if (facility.type == FacilityType.food) {
-                          topRatio = 0.26;
-                          leftRatio = 0.22;
-                        } else if (facility.type == FacilityType.water) {
-                          topRatio = 0.56;
-                          leftRatio = 0.48;
-                        } else if (facility.type == FacilityType.toilet) {
-                          topRatio = 0.68;
-                          leftRatio = 0.62;
-                        } else {
-                          // Additional dynamic registered camps
-                          topRatio = (0.20 + (index * 0.14)) % 0.8;
-                          leftRatio = (0.25 + (index * 0.18)) % 0.8;
-                        }
-
-                        final top = canvasHeight * topRatio;
-                        final left = canvasWidth * leftRatio;
-
-                        return Positioned(
-                          top: top,
-                          left: left,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedFacility = facility;
-                              });
-                            },
-                            child: AnimatedScale(
-                              scale: isSelected ? 1.25 : 1.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: facility.type == FacilityType.medical
-                                      ? AppColors.secondary
-                                      : facility.type == FacilityType.food
-                                          ? AppColors.tertiary
-                                          : facility.type == FacilityType.water
-                                              ? Colors.blue.shade700
-                                              : Colors.teal.shade700,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.primaryContainer
-                                        : Colors.white,
-                                    width: isSelected ? 3 : 2,
-                                  ),
-                                  boxShadow: const [
-                                    AppColors.tactileSaffronShadow
-                                  ],
-                                ),
-                                child: Icon(
-                                  facility.type == FacilityType.medical
-                                      ? Icons.medical_services
-                                      : facility.type == FacilityType.food
-                                          ? Icons.restaurant
-                                          : facility.type == FacilityType.water
-                                              ? Icons.water_drop
-                                              : Icons.wc,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
+            // 2. Dynamic Camp Facility Markers
+            ...facilities.map((facility) {
+              final isSelected = _selectedFacility?.id == facility.id;
+              return Marker(
+                point: LatLng(facility.latitude, facility.longitude),
+                width: isSelected ? 48 : 38,
+                height: isSelected ? 48 : 38,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedFacility = facility;
+                    });
+                    _mapController.move(
+                      LatLng(facility.latitude, facility.longitude),
+                      14.0,
+                    );
+                  },
+                  child: _buildFacilityMarker(facility, isSelected),
                 ),
-              ),
+              );
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // --- Live Palkhi Marker Widget ---
+  Widget _buildLivePalkhiMarker() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(9999),
+            border: Border.all(color: AppColors.primary, width: 1),
+            boxShadow: const [AppColors.tactileSaffronShadow],
+          ),
+          child: Text(
+            'Live Palkhi',
+            style: AppTypography.labelBold.copyWith(
+              color: AppColors.onPrimaryContainer,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
             ),
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 4),
+        ScaleTransition(
+          scale: _pulseAnimation,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: const [AppColors.tactileSaffronShadowElevated],
+            ),
+            child: const Icon(
+              Icons.celebration,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Facility Marker Widget ---
+  Widget _buildFacilityMarker(CampFacility facility, bool isSelected) {
+    Color markerColor;
+    IconData markerIcon;
+
+    switch (facility.type) {
+      case FacilityType.medical:
+        markerColor = AppColors.secondary;
+        markerIcon = Icons.medical_services;
+        break;
+      case FacilityType.food:
+        markerColor = const Color(0xFF60603E);
+        markerIcon = Icons.restaurant;
+        break;
+      case FacilityType.water:
+        markerColor = Colors.blue.shade700;
+        markerIcon = Icons.water_drop;
+        break;
+      case FacilityType.toilet:
+        markerColor = Colors.teal.shade700;
+        markerIcon = Icons.wc;
+        break;
+      default:
+        markerColor = AppColors.primary;
+        markerIcon = Icons.temple_hindu;
+    }
+
+    return AnimatedScale(
+      scale: isSelected ? 1.2 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      child: Container(
+        decoration: BoxDecoration(
+          color: markerColor,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? AppColors.primaryContainer : Colors.white,
+            width: isSelected ? 3 : 2,
+          ),
+          boxShadow: [
+            if (isSelected)
+              AppColors.tactileSaffronShadowElevated
+            else
+              const BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Center(
+          child: Icon(
+            markerIcon,
+            color: Colors.white,
+            size: isSelected ? 22 : 18,
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _PalkhiRoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Draw pilgrimage route path scaling across size
-    final path = Path();
-    path.moveTo(size.width * 0.15, size.height * 0.15);
-    path.cubicTo(
-      size.width * 0.30,
-      size.height * 0.25,
-      size.width * 0.20,
-      size.height * 0.35,
-      size.width * 0.48,
-      size.height * 0.38,
-    );
-    path.cubicTo(
-      size.width * 0.75,
-      size.height * 0.42,
-      size.width * 0.65,
-      size.height * 0.60,
-      size.width * 0.55,
-      size.height * 0.68,
-    );
-    path.cubicTo(
-      size.width * 0.45,
-      size.height * 0.76,
-      size.width * 0.70,
-      size.height * 0.85,
-      size.width * 0.80,
-      size.height * 0.95,
-    );
-
-    final roadBorderPaint = Paint()
-      ..color = const Color(0xFFD5CBBF)
-      ..strokeWidth = 14
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, roadBorderPaint);
-
-    final roadPaint = Paint()
-      ..color = const Color(0xFFE8E0D2)
-      ..strokeWidth = 10
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, roadPaint);
-
-    final roadCenterPaint = Paint()
-      ..color = AppColors.primaryContainer.withValues(alpha: 0.7)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, roadCenterPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
