@@ -32,7 +32,7 @@ class _WariConnectAppState extends State<WariConnectApp> {
         title: 'WariConnect - Vithala Guide',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.homeMap,
+        initialRoute: AppRoutes.language,
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
