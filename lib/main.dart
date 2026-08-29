@@ -38,8 +38,8 @@ class _WariConnectAppState extends State<WariConnectApp> {
     if (session != null) {
       final profile = await _appState.supabaseService.getProfile(session.user.id);
       if (profile != null) {
-        // Safe to call since it notifies listeners
-        _appState.updateUserProfile(profile);
+        // Restore authenticated state and saved user role
+        _appState.setAuthenticatedUser(profile);
       }
     }
     await _appState.loadInitialData();

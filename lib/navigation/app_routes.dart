@@ -1,35 +1,39 @@
 import 'package:flutter/material.dart';
-import '../Screens/language_selection_screen.dart';
-import '../Screens/login_otp_screen.dart';
-import '../Screens/home_map_screen.dart';
-import '../Screens/profile_guest_screen.dart';
-import '../Screens/profile_logged_in_screen.dart';
-import '../Screens/profile_org_management_screen.dart';
-import '../Screens/profile_org_donation_screen.dart';
-import '../Screens/edit_profile_screen.dart';
-import '../Screens/emergency_sos_screen.dart';
-import '../Screens/report_issue_screen.dart';
-import '../Screens/report_submitted_screen.dart';
-import '../Screens/activity_tracker_screen.dart';
-import '../Screens/donate_money_screen.dart';
-import '../Screens/volunteer_opportunities_screen.dart';
-import '../Screens/volunteer_detail_apply_screen.dart';
-import '../Screens/become_camp_organiser_screen.dart';
-import '../Screens/organiser_application_step1_screen.dart';
-import '../Screens/organiser_application_step2_screen.dart';
-import '../Screens/application_submitted_screen.dart';
-import '../Screens/application_status_screen.dart';
-import '../Screens/camp_registration_screen.dart';
-import '../Screens/my_camp_management_screen.dart';
-import '../Screens/qr_scanner_screen.dart';
-import '../Screens/help_and_support_screen.dart';
-import '../Screens/about_screen.dart';
+import '../models/app_state.dart';
+import '../theme/app_colors.dart';
+import '../screens/language_selection_screen.dart';
+import '../screens/login_otp_screen.dart';
+import '../screens/role_selection_screen.dart';
+import '../screens/home_map_screen.dart';
+import '../screens/profile_guest_screen.dart';
+import '../screens/profile_logged_in_screen.dart';
+import '../screens/profile_org_management_screen.dart';
+import '../screens/profile_org_donation_screen.dart';
+import '../screens/edit_profile_screen.dart';
+import '../screens/emergency_sos_screen.dart';
+import '../screens/report_issue_screen.dart';
+import '../screens/report_submitted_screen.dart';
+import '../screens/activity_tracker_screen.dart';
+import '../screens/donate_money_screen.dart';
+import '../screens/volunteer_opportunities_screen.dart';
+import '../screens/volunteer_detail_apply_screen.dart';
+import '../screens/become_camp_organiser_screen.dart';
+import '../screens/organiser_application_step1_screen.dart';
+import '../screens/organiser_application_step2_screen.dart';
+import '../screens/application_submitted_screen.dart';
+import '../screens/application_status_screen.dart';
+import '../screens/camp_registration_screen.dart';
+import '../screens/my_camp_management_screen.dart';
+import '../screens/qr_scanner_screen.dart';
+import '../screens/help_and_support_screen.dart';
+import '../screens/about_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
 
   static const String language = '/language';
   static const String loginOtp = '/login_otp';
+  static const String roleSelection = '/role_selection';
   static const String homeMap = '/home_map';
   static const String profileGuest = '/profile_guest';
   static const String profileLoggedIn = '/profile_logged_in';
@@ -54,32 +58,76 @@ class AppRoutes {
   static const String helpAndSupport = '/help_and_support';
   static const String about = '/about';
 
+  static Route<dynamic> _protectedRoute({
+    required WidgetBuilder builder,
+    String message = 'Please log in to use this feature.',
+  }) {
+    return MaterialPageRoute(
+      builder: (context) {
+        final appState = AppStateScope.of(context);
+        if (appState.isGuest) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          });
+          return const LoginOtpScreen();
+        }
+        return builder(context);
+      },
+    );
+  }
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case language:
         return MaterialPageRoute(builder: (_) => const LanguageSelectionScreen());
       case loginOtp:
         return MaterialPageRoute(builder: (_) => const LoginOtpScreen());
+      case roleSelection:
+        return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
       case homeMap:
         return MaterialPageRoute(builder: (_) => const HomeMapScreen());
       case profileGuest:
         return MaterialPageRoute(builder: (_) => const ProfileGuestScreen());
       case profileLoggedIn:
-        return MaterialPageRoute(builder: (_) => const ProfileLoggedInScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final appState = AppStateScope.of(context);
+            if (appState.isGuest) {
+              return const ProfileGuestScreen();
+            }
+            return const ProfileLoggedInScreen();
+          },
+        );
       case profileOrgManagement:
-        return MaterialPageRoute(builder: (_) => const ProfileOrgManagementScreen());
+        return _protectedRoute(
+          builder: (_) => const ProfileOrgManagementScreen(),
+          message: 'Please log in to access organiser management.',
+        );
       case profileOrgDonation:
-        return MaterialPageRoute(builder: (_) => const ProfileOrgDonationScreen());
+        return _protectedRoute(
+          builder: (_) => const ProfileOrgDonationScreen(),
+          message: 'Please log in to view organiser donations.',
+        );
       case editProfile:
-        return MaterialPageRoute(builder: (_) => const EditProfileScreen());
+        return _protectedRoute(
+          builder: (_) => const EditProfileScreen(),
+          message: 'Please log in to edit your profile.',
+        );
       case emergencySos:
         return MaterialPageRoute(builder: (_) => const EmergencySosScreen());
       case reportIssue:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
+        return _protectedRoute(
           builder: (_) => ReportIssueScreen(
             preselectedCampId: args?['campId'] as String?,
           ),
+          message: 'Please log in to report an issue.',
         );
       case reportSubmitted:
         final args = settings.arguments as Map<String, dynamic>?;
@@ -91,10 +139,11 @@ class AppRoutes {
         );
       case activityTracker:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
+        return _protectedRoute(
           builder: (_) => ActivityTrackerScreen(
             initialTabIndex: args?['tabIndex'] as int? ?? 0,
           ),
+          message: 'Please log in to view your activity.',
         );
       case donateMoney:
         final args = settings.arguments as Map<String, dynamic>?;
@@ -104,33 +153,55 @@ class AppRoutes {
           ),
         );
       case volunteerOpportunities:
-        return MaterialPageRoute(builder: (_) => const VolunteerOpportunitiesScreen());
+        return _protectedRoute(
+          builder: (_) => const VolunteerOpportunitiesScreen(),
+          message: 'Please log in to access volunteer opportunities.',
+        );
       case volunteerDetailApply:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
+        return _protectedRoute(
           builder: (_) => VolunteerDetailApplyScreen(
             opportunityId: args?['opportunityId'] as String? ?? 'vol-001',
           ),
+          message: 'Please log in to apply for volunteering.',
         );
       case becomeCampOrganiser:
-        return MaterialPageRoute(builder: (_) => const BecomeCampOrganiserScreen());
+        return _protectedRoute(
+          builder: (_) => const BecomeCampOrganiserScreen(),
+          message: 'Please log in to apply as a camp organiser.',
+        );
       case organiserAppStep1:
-        return MaterialPageRoute(builder: (_) => const OrganiserApplicationStep1Screen());
+        return _protectedRoute(
+          builder: (_) => const OrganiserApplicationStep1Screen(),
+          message: 'Please log in to apply as a camp organiser.',
+        );
       case organiserAppStep2:
-        return MaterialPageRoute(builder: (_) => const OrganiserApplicationStep2Screen());
+        return _protectedRoute(
+          builder: (_) => const OrganiserApplicationStep2Screen(),
+          message: 'Please log in to apply as a camp organiser.',
+        );
       case applicationSubmitted:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
+        return _protectedRoute(
           builder: (_) => ApplicationSubmittedScreen(
             appId: args?['appId'] as String? ?? '#WARI-ORG-2026-7891',
           ),
         );
       case applicationStatus:
-        return MaterialPageRoute(builder: (_) => const ApplicationStatusScreen());
+        return _protectedRoute(
+          builder: (_) => const ApplicationStatusScreen(),
+          message: 'Please log in to check your application status.',
+        );
       case campRegistration:
-        return MaterialPageRoute(builder: (_) => const CampRegistrationScreen());
+        return _protectedRoute(
+          builder: (_) => const CampRegistrationScreen(),
+          message: 'Please log in to register a camp.',
+        );
       case myCampManagement:
-        return MaterialPageRoute(builder: (_) => const MyCampManagementScreen());
+        return _protectedRoute(
+          builder: (_) => const MyCampManagementScreen(),
+          message: 'Please log in to manage your camp.',
+        );
       case qrScanner:
         return MaterialPageRoute(builder: (_) => const QrScannerScreen());
       case helpAndSupport:

@@ -13,9 +13,12 @@ import '../l10n/app_localizations.dart';
 class AppState extends ChangeNotifier {
   final SupabaseService supabaseService = SupabaseService();
   bool isLoading = false;
-  bool get isLoggedIn =>
-      supabaseService.currentUser != null ||
-      (_user.id.isNotEmpty && _user.role != UserRole.guest);
+
+  // Authentication State (Default: Guest)
+  AuthenticationState _authState = AuthenticationState.guest;
+  AuthenticationState get authState => _authState;
+  bool get isGuest => _authState == AuthenticationState.guest;
+  bool get isLoggedIn => _authState == AuthenticationState.authenticated;
 
   // CHANGED: load public data (facilities, opportunities) immediately on
   // construction so guests see real data without needing to log in.
@@ -37,7 +40,7 @@ class AppState extends ChangeNotifier {
     return AppLocalizations(_currentLanguage).translate(key);
   }
 
-  // Active Bottom Nav Tab Index (0: Map, 1: Volunteer, 2: Reports, 3: Profile)
+  // Active Bottom Nav Tab Index (0: Map, 1: Volunteer / Report, 2: Profile)
   int _currentTabIndex = 0;
   int get currentTabIndex => _currentTabIndex;
 
@@ -51,9 +54,15 @@ class AppState extends ChangeNotifier {
     id: '',
     name: 'Guest Pilgrim',
     phone: '',
-    role: UserRole.guest,
+    role: UserRole.warkari,
   );
   UserProfile get user => _user;
+
+  void setAuthenticatedUser(UserProfile profile) {
+    _user = profile;
+    _authState = AuthenticationState.authenticated;
+    notifyListeners();
+  }
 
   void updateUserProfile(UserProfile updated) async {
     _user = updated;
@@ -70,36 +79,53 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String phone) async {
+  /// Called after OTP is verified.
+  /// Returns `true` if a saved role already existed (directly authenticated).
+  /// Returns `false` if user is new and needs to select their role.
+  Future<bool> login(String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
     final formattedPhone = cleanPhone.startsWith('+')
         ? cleanPhone
         : '+91 $cleanPhone';
-    final userId = supabaseService.currentUser?.id ?? 'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
+    final userId = supabaseService.currentUser?.id ??
+        'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
 
     final profile = await supabaseService.getProfile(userId);
     if (profile != null) {
       _user = profile;
+      _authState = AuthenticationState.authenticated;
+      notifyListeners();
+      await loadInitialData();
+      if (_user.role == UserRole.organiser) {
+        await _loadOrganiserApplication();
+      }
+      return true; // Already has saved role
     } else {
+      // Temporary setup until role selection is completed
       _user = UserProfile(
         id: userId,
         phone: formattedPhone,
         name: 'Vitthal Bhakt',
-        role: UserRole.pilgrim,
-        dindiNumber: 'Dindi #12 (Alandi Route)',
+        role: UserRole.warkari,
+        dindiNumber: 'Dindi #14 (Alandi to Pandharpur)',
         emergencyContact: '+91 98220 54321',
       );
-      try {
-        await supabaseService.createProfile(_user);
-      } catch (e) {
-        debugPrint('Error creating profile: $e');
-      }
+      // Not yet authenticated until role is chosen
+      return false; // Prompt for role selection
+    }
+  }
+
+  /// Finalizes authentication when user picks their role (Warkari vs Volunteer).
+  Future<void> completeAuthenticationWithRole(UserRole role) async {
+    _user = _user.copyWith(role: role);
+    _authState = AuthenticationState.authenticated;
+    try {
+      await supabaseService.createProfile(_user);
+    } catch (e) {
+      debugPrint('Error creating profile: $e');
     }
     notifyListeners();
-    // Re-fetch everything now that we're authenticated (RLS unlocks
-    // user-specific rows: own reports, own volunteer apps, own org application).
     await loadInitialData();
-    // ADDED: pull the organiser's application/camp status if they have one.
     if (_user.role == UserRole.organiser) {
       await _loadOrganiserApplication();
     }
@@ -107,11 +133,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> logout() async {
     await supabaseService.signOut();
+    _authState = AuthenticationState.guest;
     _user = const UserProfile(
       id: '',
       name: 'Guest Pilgrim',
       phone: '',
-      role: UserRole.guest,
+      role: UserRole.warkari,
     );
     _reports = [];
     _volunteerApplications = [];

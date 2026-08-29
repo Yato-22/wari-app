@@ -220,7 +220,7 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 3),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'profile'),
     );
   }
 

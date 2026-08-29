@@ -416,7 +416,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'report'),
     );
   }
 

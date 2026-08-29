@@ -169,7 +169,7 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
               label: Text(AppStateScope.of(context).translate('report_issue_btn')),
             )
           : null,
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'report'),
     );
   }
 

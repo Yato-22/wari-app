@@ -173,7 +173,7 @@ class ReportSubmittedScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'report'),
     );
   }
 

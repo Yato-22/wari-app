@@ -108,19 +108,24 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     try {
       final appState = AppStateScope.of(context);
       await appState.supabaseService.verifyOTP(phone, otp);
-      await appState.login(phone); // fetch profile
+      final hasSavedRole = await appState.login(phone); // fetch profile
 
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: AppColors.statusOpenText,
-            content: Text('Login successful! Welcome to WariConnect.'),
-          ),
-        );
-        Navigator.of(context).pushReplacementNamed(AppRoutes.profileLoggedIn);
+        if (hasSavedRole) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: AppColors.statusOpenText,
+              content: Text('Login successful! Welcome back to WariConnect.'),
+            ),
+          );
+          Navigator.of(context).pushReplacementNamed(AppRoutes.homeMap);
+        } else {
+          // New user prompt for role selection
+          Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
+        }
       }
     } catch (e) {
       if (mounted) {

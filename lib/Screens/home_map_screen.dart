@@ -468,7 +468,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'map'),
     );
   }
 

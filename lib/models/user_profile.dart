@@ -1,6 +1,11 @@
+enum AuthenticationState {
+  guest,
+  authenticated,
+}
+
 enum UserRole {
-  guest('Guest Pilgrim'),
-  pilgrim('Warkari / Pilgrim'),
+  warkari('Warkari / Pilgrim'),
+  volunteer('Volunteer (Sevak)'),
   organiser('Camp Organiser');
 
   final String label;
@@ -27,7 +32,7 @@ class UserProfile {
     this.emergencyContact = '+91 98220 54321',
     this.dindiNumber = 'Dindi #14 (Alandi to Pandharpur)',
     this.bloodGroup = 'O+',
-    this.role = UserRole.pilgrim,
+    this.role = UserRole.warkari,
     this.avatarUrl,
     this.managedCampId = 'camp-001',
   });
@@ -59,11 +64,14 @@ class UserProfile {
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    UserRole parsedRole = UserRole.pilgrim;
-    if (json['role'] == 'organiser') {
+    UserRole parsedRole = UserRole.warkari;
+    final roleStr = json['role'] as String?;
+    if (roleStr == 'volunteer') {
+      parsedRole = UserRole.volunteer;
+    } else if (roleStr == 'organiser') {
       parsedRole = UserRole.organiser;
-    } else if (json['role'] == 'guest') {
-      parsedRole = UserRole.guest;
+    } else if (roleStr == 'warkari' || roleStr == 'pilgrim') {
+      parsedRole = UserRole.warkari;
     }
     
     return UserProfile(
@@ -75,9 +83,9 @@ class UserProfile {
   }
 
   Map<String, dynamic> toJson() {
-    String roleStr = 'pilgrim';
+    String roleStr = 'warkari';
+    if (role == UserRole.volunteer) roleStr = 'volunteer';
     if (role == UserRole.organiser) roleStr = 'organiser';
-    if (role == UserRole.guest) roleStr = 'guest';
 
     return {
       'id': id,

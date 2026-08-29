@@ -289,7 +289,7 @@ class ProfileLoggedInScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 3),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'profile'),
     );
   }
 

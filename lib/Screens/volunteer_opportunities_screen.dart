@@ -279,7 +279,7 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const AppBottomNavBar(currentTab: 'volunteer'),
     );
   }
 }
