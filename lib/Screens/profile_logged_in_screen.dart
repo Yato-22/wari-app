@@ -5,6 +5,7 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_button.dart';
 import '../models/app_state.dart';
+import '../models/user_profile.dart';
 import '../navigation/app_routes.dart';
 
 class ProfileLoggedInScreen extends StatelessWidget {
@@ -156,29 +157,31 @@ class ProfileLoggedInScreen extends StatelessWidget {
                         Navigator.of(context).pushNamed(AppRoutes.activityTracker);
                       },
                     ),
-                    const Divider(height: 1),
-                    _buildTile(
-                      icon: Icons.add_business,
-                      title: 'Become a Camp Organiser',
-                      subtitle: 'Register & manage pilgrimage camps along the route',
-                      trailingWidget: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondaryContainer.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Apply',
-                          style: AppTypography.labelBold.copyWith(
-                            color: AppColors.secondary,
-                            fontSize: 11,
+                    if (user.role != UserRole.organiser) ...[
+                      const Divider(height: 1),
+                      _buildTile(
+                        icon: Icons.add_business,
+                        title: 'Become a Camp Organiser',
+                        subtitle: 'Register & manage pilgrimage camps along the route',
+                        trailingWidget: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryContainer.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Apply',
+                            style: AppTypography.labelBold.copyWith(
+                              color: AppColors.secondary,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
+                        onTap: () {
+                          Navigator.of(context).pushNamed(AppRoutes.becomeCampOrganiser);
+                        },
                       ),
-                      onTap: () {
-                        Navigator.of(context).pushNamed(AppRoutes.becomeCampOrganiser);
-                      },
-                    ),
+                    ],
                     const Divider(height: 1),
                     _buildTile(
                       icon: Icons.payments_outlined,
@@ -192,39 +195,41 @@ class ProfileLoggedInScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              if (user.role == UserRole.organiser) ...[
+                const SizedBox(height: 16),
 
-              // Organiser View Switcher Card (Convenient access to organiser screens)
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                // Organiser View Switcher Card (Convenient access to organiser screens)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildTile(
+                        icon: Icons.roofing,
+                        title: 'Organiser Management Dashboard',
+                        subtitle: 'Manage camp status, capacity & volunteers',
+                        onTap: () {
+                          Navigator.of(context).pushNamed(AppRoutes.profileOrgManagement);
+                        },
+                      ),
+                      const Divider(height: 1),
+                      _buildTile(
+                        icon: Icons.volunteer_activism,
+                        title: 'Organiser Donations Dashboard',
+                        subtitle: 'Track donations & financial support',
+                        onTap: () {
+                          Navigator.of(context).pushNamed(AppRoutes.profileOrgDonation);
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  children: [
-                    _buildTile(
-                      icon: Icons.roofing,
-                      title: 'Organiser Management Dashboard',
-                      subtitle: 'Manage camp status, capacity & volunteers',
-                      onTap: () {
-                        Navigator.of(context).pushNamed(AppRoutes.profileOrgManagement);
-                      },
-                    ),
-                    const Divider(height: 1),
-                    _buildTile(
-                      icon: Icons.volunteer_activism,
-                      title: 'Organiser Donations Dashboard',
-                      subtitle: 'Track donations & financial support',
-                      onTap: () {
-                        Navigator.of(context).pushNamed(AppRoutes.profileOrgDonation);
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              ],
 
               const SizedBox(height: 16),
 

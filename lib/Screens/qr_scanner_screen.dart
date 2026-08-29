@@ -4,6 +4,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
 import '../models/app_state.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -13,8 +14,15 @@ class QrScannerScreen extends StatefulWidget {
 }
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
+  final MobileScannerController cameraController = MobileScannerController();
   bool _isFlashOn = false;
   bool _isCampQrMode = false;
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
+  }
 
   void _simulateQrScan() async {
     final appState = AppStateScope.of(context);
@@ -162,23 +170,28 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             // QR Camera Frame / Camp QR Display
             if (!_isCampQrMode) ...[
               Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 260,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.primaryContainer, width: 3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.primaryContainer, width: 3),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(17),
+                    child: MobileScanner(
+                      controller: cameraController,
+                      onDetect: (capture) {
+                        final List<Barcode> barcodes = capture.barcodes;
+                        for (final barcode in barcodes) {
+                          debugPrint('Barcode found! ${barcode.rawValue}');
+                          // In a real app, parse barcode.rawValue and check-in to that specific camp
+                        }
+                        _simulateQrScan(); // keeping simulation flow for UX demonstration
+                        cameraController.stop();
+                      },
                     ),
-                    Container(
-                      width: 220,
-                      height: 2,
-                      color: AppColors.primaryContainer.withValues(alpha: 0.8),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -195,6 +208,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   size: 28,
                 ),
                 onPressed: () {
+                  cameraController.toggleTorch();
                   setState(() => _isFlashOn = !_isFlashOn);
                 },
               ),
