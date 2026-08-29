@@ -3,8 +3,16 @@ import 'theme/app_theme.dart';
 import 'navigation/app_routes.dart';
 import 'models/app_state.dart';
 
-void main() {
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: 'https://hoeayfrmlclbxmikwcyl.supabase.co',
+    anonKey: 'sb_publishable_3a1m9eDPOma0HhLRFsu7sA_eW4WXAGG',
+  );
+
   runApp(const WariConnectApp());
 }
 
@@ -17,6 +25,24 @@ class WariConnectApp extends StatefulWidget {
 
 class _WariConnectAppState extends State<WariConnectApp> {
   final AppState _appState = AppState();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAppState();
+  }
+
+  Future<void> _initializeAppState() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      final profile = await _appState.supabaseService.getProfile(session.user.id);
+      if (profile != null) {
+        // Safe to call since it notifies listeners
+        _appState.updateUserProfile(profile);
+      }
+    }
+    await _appState.loadInitialData();
+  }
 
   @override
   void dispose() {
@@ -36,19 +62,6 @@ class _WariConnectAppState extends State<WariConnectApp> {
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
-  }
-}
-
-class AppStateScope extends InheritedNotifier<AppState> {
-  const AppStateScope({
-    super.key,
-    required AppState appState,
-    required super.child,
-  }) : super(notifier: appState);
-
-  static AppState of(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<AppStateScope>();
-    return scope?.notifier ?? AppState();
   }
 }
 

@@ -5,6 +5,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class LoginOtpScreen extends StatefulWidget {
   const LoginOtpScreen({super.key});
@@ -52,8 +53,9 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     });
   }
 
-  void _sendOtp() {
-    if (_phoneController.text.trim().length < 10) {
+  void _sendOtp() async {
+    final phone = _phoneController.text.trim();
+    if (phone.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid 10-digit mobile number')),
       );
@@ -64,30 +66,49 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 600), () {
+    try {
+      final appState = AppStateScope.of(context);
+      await appState.supabaseService.signInWithPhone(phone);
       if (mounted) {
         setState(() {
           _isLoading = false;
           _otpSent = true;
-          // Prepopulate OTP for testing convenience
-          _otpControllers[0].text = '1';
-          _otpControllers[1].text = '2';
-          _otpControllers[2].text = '3';
-          _otpControllers[3].text = '4';
-          _otpControllers[4].text = '5';
-          _otpControllers[5].text = '6';
+          // Clear test OTPs for real deployment, or prepopulate for dev
+          _otpControllers[0].text = '';
+          _otpControllers[1].text = '';
+          _otpControllers[2].text = '';
+          _otpControllers[3].text = '';
+          _otpControllers[4].text = '';
+          _otpControllers[5].text = '';
         });
         _startTimer();
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send OTP: $e')),
+        );
+      }
+    }
   }
 
-  void _verifyOtp() {
+  void _verifyOtp() async {
+    final phone = _phoneController.text.trim();
+    final otp = _otpControllers.map((c) => c.text).join();
+    if (otp.length < 6) return;
+
     setState(() {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 700), () {
+    try {
+      final appState = AppStateScope.of(context);
+      await appState.supabaseService.verifyOTP(phone, otp);
+      await appState.login(phone); // fetch profile
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -100,7 +121,16 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         );
         Navigator.of(context).pushReplacementNamed(AppRoutes.profileLoggedIn);
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid OTP or verification failed. $e')),
+        );
+      }
+    }
   }
 
   @override

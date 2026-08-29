@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wari_connect_app/main.dart';
-import 'package:wari_connect_app/screens/home_map_screen.dart';
+import 'package:wari_connect_app/Screens/home_map_screen.dart';
 
 void main() {
   testWidgets('WariConnectApp launches successfully and renders home screen',

@@ -8,7 +8,7 @@ import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/facility_card.dart';
 import '../models/camp_facility.dart';
 import '../navigation/app_routes.dart';
-import '../main.dart';
+import '../models/app_state.dart';
 
 class HomeMapScreen extends StatefulWidget {
   const HomeMapScreen({super.key});

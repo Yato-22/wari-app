@@ -57,5 +57,34 @@ class UserProfile {
       managedCampId: managedCampId ?? this.managedCampId,
     );
   }
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    UserRole parsedRole = UserRole.pilgrim;
+    if (json['role'] == 'organiser') {
+      parsedRole = UserRole.organiser;
+    } else if (json['role'] == 'guest') {
+      parsedRole = UserRole.guest;
+    }
+    
+    return UserProfile(
+      id: json['id'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      name: json['display_name'] as String? ?? 'Warkari',
+      role: parsedRole,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    String roleStr = 'pilgrim';
+    if (role == UserRole.organiser) roleStr = 'organiser';
+    if (role == UserRole.guest) roleStr = 'guest';
+
+    return {
+      'id': id,
+      'phone': phone,
+      'display_name': name,
+      'role': roleStr,
+    };
+  }
 }
 

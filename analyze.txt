@@ -1,0 +1,73 @@
+Analyzing wari-app...                                           
+
+  error • Undefined name 'AppStateScope'. Try correcting the name to one that is defined, or defining the name • lib/Screens/login_otp_screen.dart:70:24 • undefined_identifier
+  error • Undefined name 'AppStateScope'. Try correcting the name to one that is defined, or defining the name • lib/Screens/login_otp_screen.dart:108:24 • undefined_identifier
+   info • 'anonKey' is deprecated and shouldn't be used. Use publishableKey instead. anonKey will be removed in a future major version. Try replacing the use of the deprecated member with the replacement • lib/main.dart:13:5 • deprecated_member_use
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:48:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:76:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:110:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:138:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:152:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:163:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:178:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/models/app_state.dart:205:7 • avoid_print
+   info • Unnecessary 'this.' qualifier. Try removing 'this.' • lib/models/volunteer_opportunity.dart:118:25 • unnecessary_this
+  error • Target of URI doesn't exist: '../screens/language_selection_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:2:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/login_otp_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:3:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/home_map_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:4:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/profile_guest_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:5:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/profile_logged_in_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:6:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/profile_org_management_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:7:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/profile_org_donation_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:8:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/edit_profile_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:9:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/emergency_sos_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:10:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/report_issue_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:11:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/report_submitted_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:12:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/activity_tracker_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:13:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/donate_money_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:14:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/volunteer_opportunities_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:15:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/volunteer_detail_apply_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:16:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/become_camp_organiser_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:17:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/organiser_application_step1_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:18:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/organiser_application_step2_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:19:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/application_submitted_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:20:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/application_status_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:21:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/camp_registration_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:22:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/my_camp_management_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:23:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/qr_scanner_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:24:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/help_and_support_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:25:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../screens/about_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • lib/navigation/app_routes.dart:26:8 • uri_does_not_exist
+  error • The name 'LanguageSelectionScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:60:56 • creation_with_non_type
+  error • The name 'LoginOtpScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:62:56 • creation_with_non_type
+  error • The name 'HomeMapScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:64:56 • creation_with_non_type
+  error • The name 'ProfileGuestScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:66:56 • creation_with_non_type
+  error • The name 'ProfileLoggedInScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:68:56 • creation_with_non_type
+  error • The name 'ProfileOrgManagementScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:70:56 • creation_with_non_type
+  error • The name 'ProfileOrgDonationScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:72:56 • creation_with_non_type
+  error • The name 'EditProfileScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:74:56 • creation_with_non_type
+  error • The name 'EmergencySosScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:76:56 • creation_with_non_type
+  error • The method 'ReportIssueScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'ReportIssueScreen' • lib/navigation/app_routes.dart:80:27 • undefined_method
+  error • The method 'ReportSubmittedScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'ReportSubmittedScreen' • lib/navigation/app_routes.dart:87:27 • undefined_method
+  error • The method 'ActivityTrackerScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'ActivityTrackerScreen' • lib/navigation/app_routes.dart:95:27 • undefined_method
+  error • The method 'DonateMoneyScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'DonateMoneyScreen' • lib/navigation/app_routes.dart:102:27 • undefined_method
+  error • The name 'VolunteerOpportunitiesScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:107:56 • creation_with_non_type
+  error • The method 'VolunteerDetailApplyScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'VolunteerDetailApplyScreen' • lib/navigation/app_routes.dart:111:27 • undefined_method
+  error • The name 'BecomeCampOrganiserScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:116:56 • creation_with_non_type
+  error • The name 'OrganiserApplicationStep1Screen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:118:56 • creation_with_non_type
+  error • The name 'OrganiserApplicationStep2Screen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:120:56 • creation_with_non_type
+  error • The method 'ApplicationSubmittedScreen' isn't defined for the type 'AppRoutes'. Try correcting the name to the name of an existing method, or defining a method named 'ApplicationSubmittedScreen' • lib/navigation/app_routes.dart:124:27 • undefined_method
+  error • The name 'ApplicationStatusScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:129:56 • creation_with_non_type
+  error • The name 'CampRegistrationScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:131:56 • creation_with_non_type
+  error • The name 'MyCampManagementScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:133:56 • creation_with_non_type
+  error • The name 'QrScannerScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:135:56 • creation_with_non_type
+  error • The name 'HelpAndSupportScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:137:56 • creation_with_non_type
+  error • The name 'AboutScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:139:56 • creation_with_non_type
+  error • The name 'HomeMapScreen' isn't a class. Try correcting the name to match an existing class • lib/navigation/app_routes.dart:141:56 • creation_with_non_type
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/supabase_service.dart:47:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/supabase_service.dart:70:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/supabase_service.dart:94:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/supabase_service.dart:113:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/supabase_service.dart:128:7 • avoid_print
+  error • Target of URI doesn't exist: 'package:wari_connect_app/screens/home_map_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist • test/widget_test.dart:4:8 • uri_does_not_exist
+  error • Undefined name 'HomeMapScreen'. Try correcting the name to one that is defined, or defining the name • test/widget_test.dart:13:24 • undefined_identifier
+

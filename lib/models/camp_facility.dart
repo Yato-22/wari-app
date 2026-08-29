@@ -28,6 +28,7 @@ class CampFacility {
   final String contactPhone;
   final double latitude;
   final double longitude;
+  final String? organiserId;
 
   const CampFacility({
     required this.id,
@@ -44,6 +45,7 @@ class CampFacility {
     this.contactPhone = '+91 98765 43210',
     this.latitude = 18.5204,
     this.longitude = 73.8567,
+    this.organiserId,
   });
 
   CampFacility copyWith({
@@ -61,6 +63,7 @@ class CampFacility {
     String? contactPhone,
     double? latitude,
     double? longitude,
+    String? organiserId,
   }) {
     return CampFacility(
       id: id ?? this.id,
@@ -77,7 +80,61 @@ class CampFacility {
       contactPhone: contactPhone ?? this.contactPhone,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      organiserId: organiserId ?? this.organiserId,
     );
+  }
+
+  factory CampFacility.fromJson(Map<String, dynamic> json) {
+    FacilityType parsedType = FacilityType.all;
+    if (json['category'] != null) {
+      switch (json['category']) {
+        case 'food': parsedType = FacilityType.food; break;
+        case 'water': parsedType = FacilityType.water; break;
+        case 'medical': parsedType = FacilityType.medical; break;
+        case 'toilet': parsedType = FacilityType.toilet; break;
+        case 'shelter': parsedType = FacilityType.shelter; break;
+      }
+    }
+
+    FacilityStatus parsedStatus = FacilityStatus.open;
+    if (json['status'] != null) {
+      switch (json['status']) {
+        case 'busy': parsedStatus = FacilityStatus.busy; break;
+        case 'closed': parsedStatus = FacilityStatus.closed; break;
+        default: parsedStatus = FacilityStatus.open;
+      }
+    }
+
+    return CampFacility(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Unnamed Facility',
+      type: parsedType,
+      status: parsedStatus,
+      locationName: json['location'] as String? ?? 'Unknown Location',
+      organiserId: json['organiser_id'] as String?,
+      // Defaults for fields not in DB
+      description: 'Camp Description',
+      distanceKm: 0.0,
+      capacity: 1000,
+      currentOccupancy: 0,
+      amenities: const [],
+      contactPerson: 'Camp Organiser',
+      contactPhone: '',
+      latitude: 18.5204,
+      longitude: 73.8567,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id.isNotEmpty) 'id': id,
+      'name': name,
+      'category': type.name,
+      'status': status.name,
+      'location': locationName,
+      if (organiserId != null) 'organiser_id': organiserId,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
   }
 }
 
