@@ -231,15 +231,19 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
                         const Divider(height: 1),
                         const SizedBox(height: 10),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Meals & Stay Included',
-                              style: AppTypography.labelBold.copyWith(
-                                color: AppColors.secondary,
-                                fontSize: 11,
+                            Expanded(
+                              child: Text(
+                                'Meals & Stay Included',
+                                style: AppTypography.labelBold.copyWith(
+                                  color: AppColors.secondary,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.of(context).pushNamed(
@@ -248,11 +252,14 @@ class VolunteerOpportunitiesScreen extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.arrow_forward, size: 16),
-                              label: const Text('View Details & Apply'),
+                              label: const Text(
+                                'View & Apply',
+                                style: TextStyle(fontSize: 12),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: AppColors.onPrimary,
-                                minimumSize: const Size(140, 36),
+                                minimumSize: const Size(120, 36),
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
