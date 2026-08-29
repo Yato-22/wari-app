@@ -5,6 +5,7 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_button.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class ProfileGuestScreen extends StatelessWidget {
   const ProfileGuestScreen({super.key});
@@ -44,14 +45,14 @@ class ProfileGuestScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Welcome to WariConnect',
+              Text(
+                AppStateScope.of(context).translate('welcome_guest'),
                 textAlign: TextAlign.center,
                 style: AppTypography.headlineLg,
               ),
               const SizedBox(height: 6),
               Text(
-                'Login to save your Dindi location, track reported issues, apply for volunteer seva, or manage pilgrimage camps.',
+                AppStateScope.of(context).translate('login_desc'),
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySm.copyWith(
                   color: AppColors.onSurfaceVariant,
@@ -61,7 +62,7 @@ class ProfileGuestScreen extends StatelessWidget {
 
               // Login / Sign Up Action Button
               CustomButton(
-                label: 'Login / Sign Up',
+                label: AppStateScope.of(context).translate('login_signup'),
                 icon: Icons.arrow_forward,
                 iconTrailing: true,
                 onPressed: () {
@@ -71,7 +72,7 @@ class ProfileGuestScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
               Text(
-                'MORE OPTIONS',
+                AppStateScope.of(context).translate('more_options'),
                 style: AppTypography.labelBold.copyWith(
                   color: AppColors.onSurfaceVariant,
                 ),
@@ -92,8 +93,8 @@ class ProfileGuestScreen extends StatelessWidget {
                   children: [
                     _buildMenuItem(
                       icon: Icons.help_outline,
-                      title: 'Help & Support',
-                      subtitle: 'Helpline numbers, FAQs & guide',
+                      title: AppStateScope.of(context).translate('help_support'),
+                      subtitle: AppStateScope.of(context).translate('help_desc'),
                       onTap: () {
                         Navigator.of(context).pushNamed(AppRoutes.helpAndSupport);
                       },
@@ -101,8 +102,8 @@ class ProfileGuestScreen extends StatelessWidget {
                     const Divider(height: 1),
                     _buildMenuItem(
                       icon: Icons.info_outline,
-                      title: 'About WariConnect',
-                      subtitle: 'Mission, tradition & version v1.2.0',
+                      title: AppStateScope.of(context).translate('about'),
+                      subtitle: AppStateScope.of(context).translate('about_desc'),
                       onTap: () {
                         Navigator.of(context).pushNamed(AppRoutes.about);
                       },
@@ -110,8 +111,8 @@ class ProfileGuestScreen extends StatelessWidget {
                     const Divider(height: 1),
                     _buildMenuItem(
                       icon: Icons.language,
-                      title: 'Select Language',
-                      subtitle: 'Change app language (मराठी / हिन्दी / English)',
+                      title: AppStateScope.of(context).translate('select_language'),
+                      subtitle: AppStateScope.of(context).translate('change_lang_desc'),
                       onTap: () {
                         Navigator.of(context).pushNamed(AppRoutes.language);
                       },

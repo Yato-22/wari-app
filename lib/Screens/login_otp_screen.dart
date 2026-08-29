@@ -138,8 +138,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(
-        customTitle: 'Login | Secure Access',
+      appBar: AppTopBar(
+        customTitle: AppStateScope.of(context).translate('login_title'),
         showBackButton: true,
         showSosButton: true,
       ),
@@ -167,14 +167,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Namaste Pilgrim',
+              Text(
+                AppStateScope.of(context).translate('namaste'),
                 textAlign: TextAlign.center,
                 style: AppTypography.headlineLg,
               ),
               const SizedBox(height: 6),
               Text(
-                'Enter your mobile number to access your pilgrim pass, camp registrations, and volunteer updates.',
+                AppStateScope.of(context).translate('login_hint'),
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySm.copyWith(
                   color: AppColors.onSurfaceVariant,
@@ -195,7 +195,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'MOBILE NUMBER / मोबाईल क्रमांक',
+                      AppStateScope.of(context).translate('mobile_no'),
                       style: AppTypography.labelBold.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -224,7 +224,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     if (!_otpSent) ...[
                       const SizedBox(height: 16),
                       CustomButton(
-                        label: 'Get OTP',
+                        label: AppStateScope.of(context).translate('get_otp'),
                         icon: Icons.arrow_forward,
                         iconTrailing: true,
                         isLoading: _isLoading,
@@ -253,7 +253,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'ENTER OTP CODE',
+                            AppStateScope.of(context).translate('enter_otp'),
                             style: AppTypography.labelBold.copyWith(
                               color: AppColors.primary,
                             ),
@@ -269,7 +269,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                               minimumSize: Size.zero,
                             ),
                             child: Text(
-                              'Change Number',
+                              AppStateScope.of(context).translate('change_num'),
                               style: AppTypography.labelBold.copyWith(
                                 color: AppColors.secondary,
                               ),
@@ -329,7 +329,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       ),
                       const SizedBox(height: 16),
                       CustomButton(
-                        label: 'Verify & Proceed',
+                        label: AppStateScope.of(context).translate('verify_proceed'),
                         icon: Icons.verified_user,
                         isLoading: _isLoading,
                         onPressed: _verifyOtp,
@@ -347,7 +347,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     Navigator.of(context).pushReplacementNamed(AppRoutes.homeMap);
                   },
                   icon: const Icon(Icons.arrow_forward, size: 16),
-                  label: const Text('Explore as Guest Pilgrim'),
+                  label: Text(AppStateScope.of(context).translate('explore_guest')),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.onSurfaceVariant,
                   ),

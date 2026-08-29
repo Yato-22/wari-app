@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../models/app_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EmergencySosScreen extends StatefulWidget {
   const EmergencySosScreen({super.key});
@@ -14,6 +15,24 @@ class EmergencySosScreen extends StatefulWidget {
 class _EmergencySosScreenState extends State<EmergencySosScreen> {
   bool _sosBroadcastActive = false;
   bool _isLoading = false;
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    // Remove any non-digit characters except the plus sign
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: cleanNumber,
+    );
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch phone dialer')),
+        );
+      }
+    }
+  }
 
   void _triggerBroadcast() async {
     setState(() {
@@ -157,10 +176,9 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Big SOS Pulsing Button
-                    GestureDetector(
-                      onTap: _triggerBroadcast,
-                      child: Container(
+                    // Big SOS Pulsing Button / Swipe to SOS
+                    if (_sosBroadcastActive || _isLoading)
+                      Container(
                         height: 56,
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -180,9 +198,7 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
                             const Icon(Icons.emergency_share, color: Colors.white, size: 24),
                             const SizedBox(width: 10),
                             Text(
-                              _sosBroadcastActive
-                                  ? 'SOS SIGNAL ACTIVE'
-                                  : (_isLoading ? 'BROADCASTING...' : 'BROADCAST EMERGENCY SOS'),
+                              _sosBroadcastActive ? 'SOS SIGNAL ACTIVE' : 'BROADCASTING...',
                               style: AppTypography.labelBold.copyWith(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -191,8 +207,56 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
                             ),
                           ],
                         ),
+                      )
+                    else
+                      Dismissible(
+                        key: const ValueKey('sos_swipe'),
+                        direction: DismissDirection.startToEnd,
+                        confirmDismiss: (direction) async {
+                          _triggerBroadcast();
+                          return false; // Don't actually dismiss the widget, state change will hide it
+                        },
+                        background: Container(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(left: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade900,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.double_arrow, color: Colors.white, size: 28),
+                        ),
+                        child: Container(
+                          height: 56,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.error.withValues(alpha: 0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                              const SizedBox(width: 10),
+                              Text(
+                                'SWIPE RIGHT TO SOS',
+                                style: AppTypography.labelBold.copyWith(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -308,12 +372,7 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
           ),
           ElevatedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: color,
-                  content: Text('Calling $title ($number)...'),
-                ),
-              );
+              _makePhoneCall(number);
             },
             icon: const Icon(Icons.call, size: 16),
             label: const Text('Call Now'),
@@ -379,9 +438,7 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Calling $title at $phone...')),
-                    );
+                    _makePhoneCall(phone);
                   },
                   icon: const Icon(Icons.call, size: 16),
                   label: const Text('Call Station'),

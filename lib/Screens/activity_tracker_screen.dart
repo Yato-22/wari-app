@@ -7,6 +7,7 @@ import '../models/issue_report.dart';
 import '../models/volunteer_opportunity.dart';
 import '../models/donation_model.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class ActivityTrackerScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -114,8 +115,8 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(
-        customTitle: 'My Activity Tracker',
+      appBar: AppTopBar(
+        customTitle: AppStateScope.of(context).translate('reports_title'),
         showBackButton: false,
         showSosButton: true,
       ),
@@ -165,7 +166,7 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.onPrimary,
               icon: const Icon(Icons.add_alert),
-              label: const Text('Report New Issue'),
+              label: Text(AppStateScope.of(context).translate('report_issue_btn')),
             )
           : null,
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),

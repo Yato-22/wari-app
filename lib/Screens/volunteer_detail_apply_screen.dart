@@ -6,6 +6,7 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
 
 class VolunteerDetailApplyScreen extends StatefulWidget {
   final String opportunityId;
@@ -104,8 +105,8 @@ class _VolunteerDetailApplyScreenState extends State<VolunteerDetailApplyScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(
-        customTitle: 'Volunteer Details & Apply',
+      appBar: AppTopBar(
+        customTitle: AppStateScope.of(context).translate('volunteer_details'),
         showBackButton: true,
         showSosButton: true,
       ),
@@ -267,7 +268,7 @@ class _VolunteerDetailApplyScreenState extends State<VolunteerDetailApplyScreen>
               const SizedBox(height: 28),
 
               CustomButton(
-                label: 'Submit Application',
+                label: AppStateScope.of(context).translate('apply_now'),
                 icon: Icons.check_circle,
                 isLoading: _isLoading,
                 onPressed: _submitApplication,
