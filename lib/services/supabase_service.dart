@@ -86,7 +86,7 @@ class SupabaseService {
     final client = _client;
     if (client == null) return [];
     try {
-      final response = await client.from('facilities').select();
+      final response = await client.from('camp_facilities').select();
       return (response as List).map((e) => CampFacility.fromJson(e)).toList();
     } catch (e) {
       debugPrint('Error getting facilities: $e');
@@ -100,13 +100,13 @@ class SupabaseService {
     final data = facility.toJson();
     data['organiser_id'] = currentUser!.id;
     if (data['id'] == '') data.remove('id');
-    await client.from('facilities').insert(data);
+    await client.from('camp_facilities').insert(data);
   }
 
   Future<void> updateFacility(CampFacility facility) async {
     final client = _client;
     if (client == null || currentUser == null) return;
-    await client.from('facilities').update(facility.toJson()).eq('id', facility.id);
+    await client.from('camp_facilities').update(facility.toJson()).eq('id', facility.id);
   }
 
   // ISSUE REPORTS

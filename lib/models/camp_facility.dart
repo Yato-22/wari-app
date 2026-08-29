@@ -86,8 +86,8 @@ class CampFacility {
 
   factory CampFacility.fromJson(Map<String, dynamic> json) {
     FacilityType parsedType = FacilityType.all;
-    if (json['category'] != null) {
-      switch (json['category']) {
+    if (json['type'] != null) {
+      switch (json['type']) {
         case 'food': parsedType = FacilityType.food; break;
         case 'water': parsedType = FacilityType.water; break;
         case 'medical': parsedType = FacilityType.medical; break;
@@ -110,18 +110,17 @@ class CampFacility {
       name: json['name'] as String? ?? 'Unnamed Facility',
       type: parsedType,
       status: parsedStatus,
-      locationName: json['location'] as String? ?? 'Unknown Location',
+      locationName: json['location_name'] as String? ?? 'Unknown Location',
+      description: json['description'] as String? ?? 'Camp Description',
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : 18.5204,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : 73.8567,
+      capacity: json['capacity_max'] as int? ?? 1000,
+      currentOccupancy: json['capacity_current'] as int? ?? 0,
+      amenities: (json['amenities'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      contactPerson: json['incharge_name'] as String? ?? 'Camp Organiser',
+      contactPhone: json['incharge_phone'] as String? ?? '',
       organiserId: json['organiser_id'] as String?,
-      // Defaults for fields not in DB
-      description: 'Camp Description',
       distanceKm: 0.0,
-      capacity: 1000,
-      currentOccupancy: 0,
-      amenities: const [],
-      contactPerson: 'Camp Organiser',
-      contactPhone: '',
-      latitude: 18.5204,
-      longitude: 73.8567,
     );
   }
 
@@ -129,9 +128,17 @@ class CampFacility {
     return {
       if (id.isNotEmpty) 'id': id,
       'name': name,
-      'category': type.name,
+      'type': type.name,
       'status': status.name,
-      'location': locationName,
+      'description': description,
+      'location_name': locationName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'capacity_max': capacity,
+      'capacity_current': currentOccupancy,
+      'amenities': amenities,
+      'incharge_name': contactPerson,
+      'incharge_phone': contactPhone,
       if (organiserId != null) 'organiser_id': organiserId,
       'updated_at': DateTime.now().toIso8601String(),
     };
