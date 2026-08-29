@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'camp_facility.dart';
 import 'issue_report.dart';
 import 'volunteer_opportunity.dart';
@@ -10,6 +11,15 @@ import 'user_profile.dart';
 class AppState extends ChangeNotifier {
   final SupabaseService supabaseService = SupabaseService();
   bool isLoading = false;
+  bool get isLoggedIn => supabaseService.currentUser != null;
+
+  // CHANGED: load public data (facilities, opportunities) immediately on
+  // construction so guests see real data without needing to log in.
+  AppState() {
+    loadInitialData();
+    _subscribeToFacilityUpdates();
+  }
+
   // Language
   String _currentLanguage = 'en'; // 'mr', 'hi', 'en'
   String get currentLanguage => _currentLanguage;
@@ -28,7 +38,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // User Profile (Default: Logged out Guest)
+  // User Profile
   UserProfile _user = const UserProfile(
     id: '',
     name: 'Guest Pilgrim',
@@ -36,7 +46,6 @@ class AppState extends ChangeNotifier {
     role: UserRole.guest,
   );
   UserProfile get user => _user;
-  bool get isLoggedIn => _user.id.isNotEmpty && _user.role != UserRole.guest;
 
   void updateUserProfile(UserProfile updated) async {
     _user = updated;
@@ -44,45 +53,42 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.updateProfile(updated);
     } catch (e) {
-      debugPrint('Failed to update profile: $e');
+      print('Failed to update profile: $e');
     }
   }
 
   void setUserRole(UserRole role) {
     _user = _user.copyWith(role: role);
     notifyListeners();
-    // In a real app we might sync this to Supabase, but profile update covers it.
   }
 
   Future<void> login(String phone) async {
-    // This is called after OTP is verified
-    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
-    final formattedPhone = cleanPhone.startsWith('+')
-        ? cleanPhone
-        : '+91 $cleanPhone';
-    final userId = supabaseService.currentUser?.id ?? 'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
-
-    final profile = await supabaseService.getProfile(userId);
-    if (profile != null) {
-      _user = profile;
-    } else {
-      // Create new profile
-      _user = UserProfile(
-        id: userId,
-        phone: formattedPhone,
-        name: 'Vitthal Bhakt',
-        role: UserRole.pilgrim,
-        dindiNumber: 'Dindi #12 (Alandi Route)',
-        emergencyContact: '+91 98220 54321',
-      );
-      try {
-        await supabaseService.createProfile(_user);
-      } catch (e) {
-        debugPrint('Error creating profile: $e');
+    final userId = supabaseService.currentUser?.id;
+    if (userId != null) {
+      final profile = await supabaseService.getProfile(userId);
+      if (profile != null) {
+        _user = profile;
+      } else {
+        _user = UserProfile(
+          id: userId,
+          phone: phone,
+          name: 'Warkari',
+          role: UserRole.pilgrim,
+        );
+        try {
+          await supabaseService.createProfile(_user);
+        } catch (e) {
+          print('Error creating profile: $e');
+        }
       }
     }
-    notifyListeners();
+    // Re-fetch everything now that we're authenticated (RLS unlocks
+    // user-specific rows: own reports, own volunteer apps, own org application).
     await loadInitialData();
+    // ADDED: pull the organiser's application/camp status if they have one.
+    if (_user.role == UserRole.organiser) {
+      await _loadOrganiserApplication();
+    }
   }
 
   Future<void> logout() async {
@@ -93,11 +99,12 @@ class AppState extends ChangeNotifier {
       phone: '',
       role: UserRole.guest,
     );
-    _facilities = List.from(_defaultFacilities);
     _reports = [];
-    _opportunities = [];
     _volunteerApplications = [];
+    _currentOrganiserApp = null;
     notifyListeners();
+    // NOTE: _facilities intentionally NOT cleared — the map stays populated
+    // with public data for guests after logout.
   }
 
   Future<void> loadInitialData() async {
@@ -105,203 +112,76 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final remoteFacilities = await supabaseService.getFacilities();
-      if (remoteFacilities.isNotEmpty) {
-        _facilities = remoteFacilities;
-      } else if (_facilities.isEmpty) {
-        _facilities = List.from(_defaultFacilities);
-      }
+      _facilities = await supabaseService.getFacilities();
       _reports = await supabaseService.getIssueReports();
       _opportunities = await supabaseService.getVolunteerOpportunities();
       if (supabaseService.currentUser != null) {
         _volunteerApplications = await supabaseService.getVolunteerApplications();
       }
     } catch (e) {
-      debugPrint('Error loading data: $e');
-      if (_facilities.isEmpty) {
-        _facilities = List.from(_defaultFacilities);
-      }
+      print('Error loading data: $e');
     }
 
     isLoading = false;
     notifyListeners();
   }
 
-  // Default Pilgrimage Facilities List along Palkhi Marg
-  static const List<CampFacility> _defaultFacilities = [
-    CampFacility(
-      id: 'camp-001',
-      name: 'Vitthal Rukmini Anna Chhatra',
-      type: FacilityType.food,
-      description: 'Hot Mahaprasad (Khichdi, Pithla-Bhakri), filtered water, and resting mats available 24/7 for all Warkaris.',
-      locationName: 'Saswad Ghat Stop, Pune-Pandharpur Route',
-      distanceKm: 0.5,
-      status: FacilityStatus.open,
-      capacity: 1500,
-      currentOccupancy: 850,
-      amenities: ['Hot Mahaprasad', 'RO Filtered Water', 'Resting Hall (Mats provided)', 'Mobile Charging', 'First Aid'],
-      contactPerson: 'Rameshwar Maharaj',
-      contactPhone: '+91 98220 11223',
-      latitude: 18.3444,
-      longitude: 74.0305,
-    ),
-    CampFacility(
-      id: 'camp-002',
-      name: 'Shree Sant Tukaram Medical Seva Camp',
-      type: FacilityType.medical,
-      description: 'Free emergency doctor consultations, leg massage, blister care, pain sprays, and essential medicines.',
-      locationName: 'Jejuri Khandoba Mandir Foothills',
-      distanceKm: 1.2,
-      status: FacilityStatus.open,
-      capacity: 300,
-      currentOccupancy: 120,
-      amenities: ['Emergency Doctor On-Duty', 'Ambulance Standby (108)', 'Pain Relief Sprays', 'Foot Blister Dressing', 'Resting Cots'],
-      contactPerson: 'Dr. Anant Kulkarni',
-      contactPhone: '+91 94220 55667',
-      latitude: 18.2750,
-      longitude: 74.1592,
-    ),
-    CampFacility(
-      id: 'camp-003',
-      name: 'Sant Dnyaneshwar Jal Seva Kendra',
-      type: FacilityType.water,
-      description: 'Chilled RO filtered drinking water refill station, electrolyte distribution, and compostable cups.',
-      locationName: 'Valhe Village Chowk, Palkhi Marg',
-      distanceKm: 2.8,
-      status: FacilityStatus.busy,
-      capacity: 6000,
-      currentOccupancy: 4800,
-      amenities: ['Chilled RO Water', 'ORS / Electrolytes', 'Quick Refill Dispensers', 'Biodegradable Cups'],
-      contactPerson: 'Mahesh Jadhav',
-      contactPhone: '+91 97654 33221',
-      latitude: 18.1722,
-      longitude: 74.1611,
-    ),
-    CampFacility(
-      id: 'camp-004',
-      name: 'Pandharpur Mobile Sanitation & Toilet Complex',
-      type: FacilityType.toilet,
-      description: 'Maintained hygienic mobile toilets, separate washrooms for women, running water, and liquid sanitizers.',
-      locationName: 'Lonand Phata, Palkhi Highway',
-      distanceKm: 4.1,
-      status: FacilityStatus.open,
-      capacity: 80,
-      currentOccupancy: 35,
-      amenities: ['Separate Women Washrooms', '24/7 Running Water', 'Handwash & Sanitizer', 'Disabled Accessible'],
-      contactPerson: 'Santosh Shinde',
-      contactPhone: '+91 98900 44556',
-      latitude: 18.0428,
-      longitude: 74.1883,
-    ),
-    CampFacility(
-      id: 'camp-005',
-      name: 'Dnyanoba Mauli Annachatra & Vishranti Gruha',
-      type: FacilityType.food,
-      description: 'Continuous hot meals serving Shira, Sheera-Upma breakfast and full thali meal. Large waterproof tent for overnight stay.',
-      locationName: 'Phaltan Sugar Factory Ground, Phaltan',
-      distanceKm: 8.5,
-      status: FacilityStatus.open,
-      capacity: 2500,
-      currentOccupancy: 1400,
-      amenities: ['Breakfast & Thali Meals', 'Waterproof Night Shelter', 'Clean Drinking Water', 'Luggage Cloakroom'],
-      contactPerson: 'Pandurang Patil',
-      contactPhone: '+91 94230 77889',
-      latitude: 17.9833,
-      longitude: 74.4333,
-    ),
-    CampFacility(
-      id: 'camp-006',
-      name: 'Red Cross Emergency Trauma & Blister Care Unit',
-      type: FacilityType.medical,
-      description: 'Advanced medical camp with orthopedic support, cardiac defibrillator, and 50 bed resting recovery facility.',
-      locationName: 'Malshiras Central Bus Stand Stop',
-      distanceKm: 14.0,
-      status: FacilityStatus.open,
-      capacity: 500,
-      currentOccupancy: 210,
-      amenities: ['Physiotherapy & Foot Care', 'Cardiac ICU Van', 'Free Glucose & IV Drips', 'Wheelchairs Available'],
-      contactPerson: 'Dr. Sunita Deshmukh',
-      contactPhone: '+91 98231 99001',
-      latitude: 17.8500,
-      longitude: 74.9000,
-    ),
-    CampFacility(
-      id: 'camp-007',
-      name: 'Wakhari Ringan Seva Camp & Water Station',
-      type: FacilityType.water,
-      description: 'Grand Ringan ceremony hydration zone. High-capacity water tankers and glucose drink pouches for all Dindis.',
-      locationName: 'Wakhari Ringan Ground, Pandharpur Outskirts',
-      distanceKm: 22.4,
-      status: FacilityStatus.busy,
-      capacity: 10000,
-      currentOccupancy: 8500,
-      amenities: ['Tanker Refill Lines', 'Glucose Energy Drinks', 'Emergency First Aid', 'Dindi Coordination Desk'],
-      contactPerson: 'Babanrao Salunkhe',
-      contactPhone: '+91 97630 44552',
-      latitude: 17.6980,
-      longitude: 75.2750,
-    ),
-    CampFacility(
-      id: 'camp-008',
-      name: 'Chandrabhaga Snan & Ghat Sanitation Base',
-      type: FacilityType.toilet,
-      description: 'Holy bath assistance station at Chandrabhaga river bank with changing rooms, locker kiosks, and mobile toilets.',
-      locationName: 'Chandrabhaga River Ghat, Pandharpur',
-      distanceKm: 25.0,
-      status: FacilityStatus.open,
-      capacity: 200,
-      currentOccupancy: 180,
-      amenities: ['Secure Clothes Locker', 'Women Changing Rooms', 'Life Guard Patrol', 'Soap & Water Kiosks'],
-      contactPerson: 'Vitthal Mandir Trust Sevadhar',
-      contactPhone: '+91 98500 12345',
-      latitude: 17.6775,
-      longitude: 75.3268,
-    ),
-    CampFacility(
-      id: 'camp-009',
-      name: 'Alandi Palkhi Prasthan Annachatra',
-      type: FacilityType.food,
-      description: 'Palkhi departure ceremony base camp with sweet Prasad, hot tea, and medical standby.',
-      locationName: 'Indrayani River Ghat, Alandi',
-      distanceKm: 0.0,
-      status: FacilityStatus.open,
-      capacity: 3000,
-      currentOccupancy: 2200,
-      amenities: ['24/7 Chai & Prasad', 'Resting Pandal', 'Lost & Found Booth', 'Audio Public Announcement'],
-      contactPerson: 'Eknath Maharaj',
-      contactPhone: '+91 98224 88776',
-      latitude: 18.6772,
-      longitude: 73.8967,
-    ),
-    CampFacility(
-      id: 'camp-010',
-      name: 'Dive Ghat Top Relief & Hydration Post',
-      type: FacilityType.water,
-      description: 'Crucial mountain pass resting post after the steep Dive Ghat ascent. Energy drinks, lemon water, and medical rest beds.',
-      locationName: 'Dive Ghat Summit Mastani Talav Viewpoint',
-      distanceKm: 3.5,
-      status: FacilityStatus.open,
-      capacity: 4000,
-      currentOccupancy: 2900,
-      amenities: ['Lemon Sharbath (Hydration)', 'Stretcher Evacuation Team', 'Oxygen Support', 'Shaded Rest Benches'],
-      contactPerson: 'Sanjay Jagtap',
-      contactPhone: '+91 94225 33441',
-      latitude: 18.3980,
-      longitude: 73.9980,
-    ),
-  ];
-
-  // Camp Facilities List
-  List<CampFacility> _facilities = List.from(_defaultFacilities);
+  // ============ Camp Facilities ============
+  List<CampFacility> _facilities = [];
   List<CampFacility> get facilities => List.unmodifiable(_facilities);
+
+  RealtimeChannel? _facilitiesChannel;
+
+  // ADDED: keep the map in sync when ANY organiser updates their camp
+  // (status, occupancy), not just the current device's own edits.
+  void _subscribeToFacilityUpdates() {
+    final client = supabaseService.client;
+    if (client == null) return;
+    
+    _facilitiesChannel = client
+        .channel('public:camp_facilities')
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.update,
+        schema: 'public',
+        table: 'camp_facilities',
+        callback: (payload) {
+          final updated = CampFacility.fromJson(payload.newRecord);
+          final index = _facilities.indexWhere((f) => f.id == updated.id);
+          if (index != -1) {
+            _facilities[index] = updated;
+          } else {
+            _facilities.insert(0, updated);
+          }
+          notifyListeners();
+        },
+      )
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'camp_facilities',
+        callback: (payload) {
+          final created = CampFacility.fromJson(payload.newRecord);
+          if (!_facilities.any((f) => f.id == created.id)) {
+            _facilities.insert(0, created);
+            notifyListeners();
+          }
+        },
+      )
+      ..subscribe();
+  }
 
   CampFacility? getFacilityById(String id) {
     try {
       return _facilities.firstWhere((f) => f.id == id);
     } catch (_) {
-      return _facilities.isNotEmpty ? _facilities.first : null;
+      return null;
     }
   }
+
+  // REMOVED: loadFacilities() — was redundant with loadInitialData() and
+  // called a supabaseService.fetchFacilities() method that doesn't exist
+  // in your service (which uses getFacilities()). loadInitialData() now
+  // covers this for both guests and logged-in users.
 
   Future<void> updateFacilityStatus(String id, FacilityStatus newStatus) async {
     final index = _facilities.indexWhere((f) => f.id == id);
@@ -312,7 +192,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
-        debugPrint('Error updating facility: $e');
+        print('Error updating facility: $e');
       }
     }
   }
@@ -326,7 +206,7 @@ class AppState extends ChangeNotifier {
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
-        debugPrint('Error updating facility: $e');
+        print('Error updating facility: $e');
       }
     }
   }
@@ -337,12 +217,11 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createFacility(facility);
     } catch (e) {
-      debugPrint('Error adding facility: $e');
-      // Could remove it on failure or show error
+      print('Error adding facility: $e');
     }
   }
 
-  // Issue Reports List
+  // ============ Issue Reports ============
   List<IssueReport> _reports = [];
   List<IssueReport> get reports => List.unmodifiable(_reports);
 
@@ -352,21 +231,28 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createIssueReport(report);
     } catch (e) {
-      debugPrint('Error adding report (RLS might prevent this): $e');
+      print('Error adding report (RLS might prevent this): $e');
     }
   }
 
-  void resolveReport(String reportId) {
+  // CHANGED: now persists to Supabase instead of local-only, so
+  // my_camp_management_screen's "Mark Resolved" actually sticks.
+  // Requires adding `updateIssueReport` to SupabaseService (see below).
+  Future<void> resolveReport(String reportId) async {
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index != -1) {
-      _reports[index] = _reports[index].copyWith(status: IssueStatus.resolved);
+      final updated = _reports[index].copyWith(status: IssueStatus.resolved);
+      _reports[index] = updated;
       notifyListeners();
-      // Need an update IssueReport method in SupabaseService if this feature is needed.
-      // Leaving local-only for now if RLS is restricted.
+      try {
+        await supabaseService.updateIssueReport(updated);
+      } catch (e) {
+        print('Error resolving report: $e');
+      }
     }
   }
 
-  // Volunteer Opportunities & Applications
+  // ============ Volunteer Opportunities & Applications ============
   List<VolunteerOpportunity> _opportunities = [];
   List<VolunteerOpportunity> get opportunities => List.unmodifiable(_opportunities);
 
@@ -379,19 +265,27 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createVolunteerApplication(app);
     } catch (e) {
-      debugPrint('Error adding application (RLS might prevent this): $e');
+      print('Error adding application (RLS might prevent this): $e');
     }
   }
 
-  void updateVolunteerAppStatus(String id, VolunteerStatus status) {
+  // CHANGED: now persists to Supabase, so organiser approve/reject sticks.
+  // Requires adding `updateVolunteerApplication` to SupabaseService.
+  Future<void> updateVolunteerAppStatus(String id, VolunteerStatus status) async {
     final index = _volunteerApplications.indexWhere((a) => a.id == id);
     if (index != -1) {
-      _volunteerApplications[index] = _volunteerApplications[index].copyWith(status: status);
+      final updated = _volunteerApplications[index].copyWith(status: status);
+      _volunteerApplications[index] = updated;
       notifyListeners();
+      try {
+        await supabaseService.updateVolunteerApplication(updated);
+      } catch (e) {
+        print('Error updating volunteer application: $e');
+      }
     }
   }
 
-  // Donations List
+  // ============ Donations (LOCAL ONLY — for show, not wired to backend) ============
   final List<DonationRecord> _donations = [
     DonationRecord(
       id: '#DON-2026-9812',
@@ -422,30 +316,43 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Organiser Application
-  OrganiserApplication? _currentOrganiserApp = OrganiserApplication(
-    id: '#WARI-ORG-2026-7891',
-    organiserName: 'Vitthal Bhakt',
-    trustName: 'Shri Vitthal Seva Pratishthan Trust',
-    registrationNumber: 'MAH/PUN/2018/9842',
-    phone: '+91 98765 43210',
-    email: 'vitthal.bhakt@warkari.org',
-    idProofType: 'Aadhaar Card',
-    facilityName: 'Vitthal Rukmini Anna Chhatra',
-    serviceTypes: const ['Anna Chhatra (Food)', 'RO Water Point', 'First Aid'],
-    capacity: 1200,
-    routeStop: 'Saswad Ghat Stop, Pune Route',
-    locationAddress: 'Survey No. 45, Alandi-Pandharpur Palkhi Marg, Saswad',
-    emergencyContactOnSite: '+91 98220 11223',
-    status: OrganiserAppStatus.documentVerification,
-    submittedAt: DateTime.now().subtract(const Duration(hours: 18)),
-  );
+  // ============ Organiser Application ============
+  OrganiserApplication? _currentOrganiserApp;
   OrganiserApplication? get currentOrganiserApp => _currentOrganiserApp;
 
-  void submitOrganiserApplication(OrganiserApplication app) {
-    _currentOrganiserApp = app;
-    _user = _user.copyWith(role: UserRole.organiser);
-    notifyListeners();
+  // ADDED: pulls the real application status/officer assignment for
+  // application_status_screen.dart instead of showing hardcoded data.
+  // Requires adding `getOrganiserApplication` to SupabaseService.
+  Future<void> _loadOrganiserApplication() async {
+    try {
+      final app = await supabaseService.getOrganiserApplication(_user.id);
+      _currentOrganiserApp = app;
+      notifyListeners();
+    } catch (e) {
+      print('Error loading organiser application: $e');
+    }
+  }
+
+  // CHANGED: now async and actually submits to Supabase (via the
+  // submit-organiser-application Edge Function), instead of just
+  // storing locally. Requires adding `submitOrganiserApplication`
+  // to SupabaseService.
+  Future<void> submitOrganiserApplication(OrganiserApplication app) async {
+    try {
+      final created = await supabaseService.submitOrganiserApplication(app);
+      _currentOrganiserApp = created;
+      _user = _user.copyWith(role: UserRole.organiser);
+      notifyListeners();
+    } catch (e) {
+      print('Error submitting organiser application: $e');
+      rethrow; // let the screen show an error SnackBar
+    }
+  }
+
+  @override
+  void dispose() {
+    _facilitiesChannel?.unsubscribe();
+    super.dispose();
   }
 }
 
@@ -461,4 +368,3 @@ class AppStateScope extends InheritedNotifier<AppState> {
     return scope?.notifier ?? AppState();
   }
 }
-

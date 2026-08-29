@@ -5,6 +5,8 @@ import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../navigation/app_routes.dart';
+import '../models/app_state.dart';
+import '../models/organiser_app_model.dart';
 
 class OrganiserApplicationStep2Screen extends StatefulWidget {
   const OrganiserApplicationStep2Screen({super.key});
@@ -60,7 +62,7 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
     super.dispose();
   }
 
-  void _submitApplication() {
+  void _submitApplication() async {
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please agree to the verification terms')),
@@ -72,7 +74,31 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 700), () {
+    try {
+      final appState = AppStateScope.of(context);
+      
+      final application = OrganiserApplication(
+        id: '',
+        organiserName: appState.user.name.isEmpty ? 'Applicant Name' : appState.user.name,
+        trustName: 'Demo Trust', // Should be passed from Step 1, using mock
+        registrationNumber: 'REG-1234',
+        phone: appState.user.phone,
+        email: 'org@example.com',
+        idProofType: 'Aadhaar Card',
+        facilityName: _facilityNameController.text,
+        serviceTypes: _services.entries.where((e) => e.value).map((e) => e.key).toList(),
+        capacity: int.tryParse(_capacityController.text) ?? 100,
+        routeStop: _selectedRouteStop,
+        locationAddress: _addressController.text,
+        latitude: 18.5204, // Derived from GPS controller in real app
+        longitude: 73.8567,
+        emergencyContactOnSite: _emergencyContactController.text,
+        status: OrganiserAppStatus.submitted,
+        submittedAt: DateTime.now(),
+      );
+
+      await appState.submitOrganiserApplication(application);
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -80,11 +106,20 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
         Navigator.of(context).pushReplacementNamed(
           AppRoutes.applicationSubmitted,
           arguments: {
-            'appId': '#WARI-ORG-2026-${(1000 + (DateTime.now().millisecondsSinceEpoch % 9000))}',
+            'appId': appState.currentOrganiserApp?.id ?? '#WARI-ORG-PENDING',
           },
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit application: $e')),
+        );
+      }
+    }
   }
 
   @override

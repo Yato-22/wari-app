@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wari_connect_app/models/app_state.dart';
 import 'package:wari_connect_app/models/user_profile.dart';
-import 'package:wari_connect_app/screens/home_map_screen.dart';
-import 'package:wari_connect_app/screens/login_otp_screen.dart';
-import 'package:wari_connect_app/screens/application_submitted_screen.dart';
-import 'package:wari_connect_app/screens/report_submitted_screen.dart';
-import 'package:wari_connect_app/screens/profile_guest_screen.dart';
-import 'package:wari_connect_app/screens/profile_logged_in_screen.dart';
+import 'package:wari_connect_app/Screens/home_map_screen.dart';
+import 'package:wari_connect_app/Screens/login_otp_screen.dart';
+import 'package:wari_connect_app/Screens/application_submitted_screen.dart';
+import 'package:wari_connect_app/Screens/report_submitted_screen.dart';
+import 'package:wari_connect_app/Screens/profile_guest_screen.dart';
+import 'package:wari_connect_app/Screens/profile_logged_in_screen.dart';
 import 'package:wari_connect_app/theme/app_theme.dart';
 
 void main() {

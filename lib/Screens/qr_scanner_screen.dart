@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
 import '../widgets/custom_button.dart';
+import '../models/app_state.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -15,10 +16,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   bool _isFlashOn = false;
   bool _isCampQrMode = false;
 
-  void _simulateQrScan() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
+  void _simulateQrScan() async {
+    final appState = AppStateScope.of(context);
+    final mockCampId = appState.facilities.isNotEmpty ? appState.facilities.first.id : 'CAMP-001';
+    await appState.supabaseService.checkInCamp(mockCampId);
+    
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceContainerLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
@@ -77,6 +83,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         ],
       ),
     );
+    }
   }
 
   @override

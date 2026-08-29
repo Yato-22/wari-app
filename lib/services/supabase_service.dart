@@ -4,6 +4,7 @@ import '../models/user_profile.dart';
 import '../models/camp_facility.dart';
 import '../models/issue_report.dart';
 import '../models/volunteer_opportunity.dart';
+import '../models/organiser_app_model.dart';
 
 class SupabaseService {
   SupabaseClient? get _client {
@@ -13,6 +14,8 @@ class SupabaseService {
       return null;
     }
   }
+
+  SupabaseClient? get client => _client;
 
   // AUTH
   User? get currentUser => _client?.auth.currentUser;
@@ -128,6 +131,12 @@ class SupabaseService {
     await client.from('issue_reports').insert(data);
   }
 
+  Future<void> updateIssueReport(IssueReport report) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    await client.from('issue_reports').update(report.toJson()).eq('id', report.id);
+  }
+
   // VOLUNTEER OPPORTUNITIES
   Future<List<VolunteerOpportunity>> getVolunteerOpportunities() async {
     final client = _client;
@@ -164,5 +173,74 @@ class SupabaseService {
     data['user_id'] = currentUser!.id;
     if (data['id'] == '') data.remove('id');
     await client.from('volunteer_applications').insert(data);
+  }
+
+  Future<void> updateVolunteerApplication(VolunteerApplication application) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    await client.from('volunteer_applications').update(application.toJson()).eq('id', application.id);
+  }
+
+  // ORGANISER APPLICATIONS
+  Future<OrganiserApplication?> getOrganiserApplication(String userId) async {
+    final client = _client;
+    if (client == null) return null;
+    try {
+      final response = await client
+          .from('organiser_applications')
+          .select()
+          .eq('organiser_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (response != null) {
+        return OrganiserApplication.fromJson(response);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting organiser application: $e');
+      return null;
+    }
+  }
+
+  Future<OrganiserApplication> submitOrganiserApplication(OrganiserApplication app) async {
+    final client = _client;
+    if (client == null || currentUser == null) throw Exception('Not logged in');
+    final response = await client.functions.invoke('submit-organiser-application', body: app.toJson());
+    // Assume edge function returns the created app ID or the full app
+    if (response.status == 200) {
+      final data = response.data;
+      if (data is Map<String, dynamic> && data.containsKey('app_id')) {
+         return app.copyWith(id: data['app_id'] as String);
+      }
+    }
+    return app; // Fallback
+  }
+
+  // OTHER UTILS
+  Future<void> triggerSos(double latitude, double longitude) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    try {
+      await client.functions.invoke('trigger-sos', body: {
+        'latitude': latitude,
+        'longitude': longitude,
+      });
+    } catch (e) {
+      debugPrint('Error triggering SOS: $e');
+    }
+  }
+
+  Future<void> checkInCamp(String campId) async {
+    final client = _client;
+    if (client == null || currentUser == null) return;
+    try {
+      await client.from('camp_checkins').insert({
+        'camp_id': campId,
+        'user_id': currentUser!.id,
+      });
+    } catch (e) {
+      debugPrint('Error checking into camp: $e');
+    }
   }
 }

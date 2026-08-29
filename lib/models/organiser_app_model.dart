@@ -100,5 +100,58 @@ class OrganiserApplication {
       officerPhone: officerPhone ?? this.officerPhone,
     );
   }
+
+  factory OrganiserApplication.fromJson(Map<String, dynamic> json) {
+    return OrganiserApplication(
+      id: json['id'] as String? ?? '',
+      organiserName: json['trustee_name'] as String? ?? '',
+      trustName: json['trust_name'] as String? ?? '',
+      registrationNumber: json['reg_no'] as String? ?? '',
+      phone: json['contact_phone'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      idProofType: json['id_type'] as String? ?? '',
+      facilityName: json['facility_name'] as String? ?? '',
+      serviceTypes: (json['services'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      capacity: json['capacity'] as int? ?? 0,
+      routeStop: json['route_stop'] as String? ?? '',
+      locationAddress: json['address'] as String? ?? '',
+      latitude: json['gps_coordinates'] != null
+          ? double.tryParse((json['gps_coordinates'] as String).split(',').first) ?? 18.5204
+          : 18.5204,
+      longitude: json['gps_coordinates'] != null && (json['gps_coordinates'] as String).contains(',')
+          ? double.tryParse((json['gps_coordinates'] as String).split(',').last) ?? 73.8567
+          : 73.8567,
+      emergencyContactOnSite: json['emergency_contact'] as String? ?? '',
+      status: OrganiserAppStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => OrganiserAppStatus.submitted,
+      ),
+      submittedAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      assignedOfficer: json['assigned_officer_name'] as String? ?? 'Suresh Patil (Field Officer)',
+      officerPhone: json['assigned_officer_phone'] as String? ?? '+91 94220 12345',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id.isNotEmpty) 'id': id,
+      'trustee_name': organiserName,
+      'trust_name': trustName,
+      'reg_no': registrationNumber,
+      'contact_phone': phone,
+      'email': email,
+      'id_type': idProofType,
+      'facility_name': facilityName,
+      'services': serviceTypes,
+      'capacity': capacity,
+      'route_stop': routeStop,
+      'address': locationAddress,
+      'gps_coordinates': '$latitude,$longitude',
+      'emergency_contact': emergencyContactOnSite,
+      'status': status.name,
+      'assigned_officer_name': assignedOfficer,
+      'assigned_officer_phone': officerPhone,
+    };
+  }
 }
 

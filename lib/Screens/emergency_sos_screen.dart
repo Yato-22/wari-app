@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_top_bar.dart';
+import '../models/app_state.dart';
 
 class EmergencySosScreen extends StatefulWidget {
   const EmergencySosScreen({super.key});
@@ -12,11 +13,38 @@ class EmergencySosScreen extends StatefulWidget {
 
 class _EmergencySosScreenState extends State<EmergencySosScreen> {
   bool _sosBroadcastActive = false;
+  bool _isLoading = false;
 
-  void _triggerBroadcast() {
+  void _triggerBroadcast() async {
     setState(() {
-      _sosBroadcastActive = true;
+      _isLoading = true;
     });
+
+    try {
+      final appState = AppStateScope.of(context);
+      // Trigger Edge Function
+      await appState.supabaseService.triggerSos(18.5204, 73.8567);
+
+      if (mounted) {
+        setState(() {
+          _sosBroadcastActive = true;
+          _isLoading = false;
+        });
+        _showBroadcastDialog();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to trigger SOS: $e')),
+        );
+      }
+    }
+  }
+
+  void _showBroadcastDialog() {
 
     showDialog(
       context: context,
@@ -154,7 +182,7 @@ class _EmergencySosScreenState extends State<EmergencySosScreen> {
                             Text(
                               _sosBroadcastActive
                                   ? 'SOS SIGNAL ACTIVE'
-                                  : 'BROADCAST EMERGENCY SOS',
+                                  : (_isLoading ? 'BROADCASTING...' : 'BROADCAST EMERGENCY SOS'),
                               style: AppTypography.labelBold.copyWith(
                                 color: Colors.white,
                                 fontSize: 14,
