@@ -30,15 +30,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       final user = AppStateScope.of(context).user;
-      if (user.name.isNotEmpty) _nameController.text = user.name;
-      if (user.phone.isNotEmpty) {
-        _phoneController.text = user.phone.replaceAll(RegExp(r'\D'), '');
+      if (user.displayName.isNotEmpty) _nameController.text = user.displayName;
+      if (user.phone != null && user.phone!.isNotEmpty) {
+        _phoneController.text = user.phone!.replaceAll(RegExp(r'\D'), '');
       }
-      if (user.emergencyContact.isNotEmpty) {
-        _emergencyContactController.text = user.emergencyContact.replaceAll(RegExp(r'\D'), '');
+      if (user.emergencyContact != null && user.emergencyContact!.isNotEmpty) {
+        _emergencyContactController.text = user.emergencyContact!.replaceAll(RegExp(r'\D'), '');
       }
-      if (user.dindiNumber.isNotEmpty) _dindiController.text = user.dindiNumber;
-      if (user.bloodGroup.isNotEmpty) _selectedBloodGroup = user.bloodGroup;
+      if (user.dindiNumber != null && user.dindiNumber!.isNotEmpty) _dindiController.text = user.dindiNumber!;
+      if (user.bloodGroup != null && user.bloodGroup!.isNotEmpty) _selectedBloodGroup = user.bloodGroup!;
       _initialized = true;
     }
   }
@@ -60,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final appState = AppStateScope.of(context);
     final user = appState.user;
     final updated = user.copyWith(
-      name: _nameController.text.trim(),
+      displayName: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       emergencyContact: _emergencyContactController.text.trim(),
       dindiNumber: _dindiController.text.trim(),

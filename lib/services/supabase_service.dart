@@ -69,15 +69,19 @@ class SupabaseService {
 
   Future<void> createProfile(UserProfile profile) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot create profile: not authenticated');
+    }
     final data = profile.toJson();
     data['id'] = currentUser!.id;
-    await client.from('profiles').insert(data);
+    await client.from('profiles').upsert(data);
   }
 
   Future<void> updateProfile(UserProfile profile) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot update profile: not authenticated');
+    }
     await client.from('profiles').update(profile.toJson()).eq('id', currentUser!.id);
   }
 
@@ -96,7 +100,9 @@ class SupabaseService {
 
   Future<void> createFacility(CampFacility facility) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot create facility: not authenticated');
+    }
     final data = facility.toJson();
     data['organiser_id'] = currentUser!.id;
     if (data['id'] == '') data.remove('id');
@@ -105,7 +111,9 @@ class SupabaseService {
 
   Future<void> updateFacility(CampFacility facility) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot update facility: not authenticated');
+    }
     await client.from('camp_facilities').update(facility.toJson()).eq('id', facility.id);
   }
 
@@ -124,7 +132,9 @@ class SupabaseService {
 
   Future<void> createIssueReport(IssueReport report) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot create issue report: not authenticated');
+    }
     final data = report.toJson();
     data['reporter_id'] = currentUser!.id;
     if (data['id'] == '') data.remove('id');
@@ -133,7 +143,9 @@ class SupabaseService {
 
   Future<void> updateIssueReport(IssueReport report) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot update issue report: not authenticated');
+    }
     await client.from('issue_reports').update(report.toJson()).eq('id', report.id);
   }
 
@@ -168,7 +180,9 @@ class SupabaseService {
 
   Future<void> createVolunteerApplication(VolunteerApplication application) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot create volunteer application: not authenticated');
+    }
     final data = application.toJson();
     data['user_id'] = currentUser!.id;
     if (data['id'] == '') data.remove('id');
@@ -177,7 +191,9 @@ class SupabaseService {
 
   Future<void> updateVolunteerApplication(VolunteerApplication application) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot update volunteer application: not authenticated');
+    }
     await client.from('volunteer_applications').update(application.toJson()).eq('id', application.id);
   }
 
@@ -238,7 +254,9 @@ class SupabaseService {
   /// Marks an issue report as resolved or in-progress (uses Supabase RPC function).
   Future<void> resolveCampIssue(String issueId, {String status = 'resolved'}) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot resolve issue: not authenticated');
+    }
     try {
       await client.rpc(
         'resolve_issue_report',
@@ -256,7 +274,9 @@ class SupabaseService {
   /// Approves or rejects a volunteer application (uses Supabase RPC function).
   Future<void> reviewVolunteerApplication(String applicationId, String status) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot review application: not authenticated');
+    }
     try {
       await client.rpc(
         'update_volunteer_application_status',
@@ -278,7 +298,9 @@ class SupabaseService {
     required int currentCapacity,
   }) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot update camp status: not authenticated');
+    }
     try {
       await client.from('camp_facilities').update({
         'status': status,
@@ -293,7 +315,9 @@ class SupabaseService {
   // OTHER UTILS
   Future<void> triggerSos(double latitude, double longitude) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot trigger SOS: not authenticated');
+    }
     try {
       await client.functions.invoke('trigger-sos', body: {
         'latitude': latitude,
@@ -301,12 +325,15 @@ class SupabaseService {
       });
     } catch (e) {
       debugPrint('Error triggering SOS: $e');
+      rethrow;
     }
   }
 
   Future<void> checkInCamp(String campId) async {
     final client = _client;
-    if (client == null || currentUser == null) return;
+    if (client == null || currentUser == null) {
+      throw Exception('Cannot check in: not authenticated');
+    }
     try {
       await client.from('camp_checkins').insert({
         'camp_id': campId,
@@ -314,6 +341,7 @@ class SupabaseService {
       });
     } catch (e) {
       debugPrint('Error checking into camp: $e');
+      rethrow;
     }
   }
 }

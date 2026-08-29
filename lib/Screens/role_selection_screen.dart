@@ -23,26 +23,37 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       _isLoading = true;
     });
 
-    final appState = AppStateScope.of(context);
-    await appState.completeAuthenticationWithRole(_selectedRole);
+    try {
+      final appState = AppStateScope.of(context);
+      await appState.completeAuthenticationWithRole(_selectedRole);
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
 
-      final roleName = _selectedRole == UserRole.volunteer ? 'Volunteer' : 'Warkari';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.statusOpenText,
-          content: Text('Welcome $roleName! Your profile is set up.'),
-        ),
-      );
+        final roleName = _selectedRole == UserRole.volunteer ? 'Volunteer' : 'Warkari';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.statusOpenText,
+            content: Text('Welcome $roleName! Your profile is set up.'),
+          ),
+        );
 
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.homeMap,
-        (route) => false,
-      );
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.homeMap,
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to set up profile: $e')),
+        );
+      }
     }
   }
 

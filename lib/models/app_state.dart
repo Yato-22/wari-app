@@ -52,8 +52,7 @@ class AppState extends ChangeNotifier {
   // User Profile
   UserProfile _user = const UserProfile(
     id: '',
-    name: 'Guest Pilgrim',
-    phone: '',
+    displayName: 'Guest Pilgrim',
     role: UserRole.warkari,
   );
   UserProfile get user => _user;
@@ -65,12 +64,16 @@ class AppState extends ChangeNotifier {
   }
 
   void updateUserProfile(UserProfile updated) async {
+    final previous = _user;
     _user = updated;
     notifyListeners();
     try {
       await supabaseService.updateProfile(updated);
     } catch (e) {
+      _user = previous;
+      notifyListeners();
       debugPrint('Failed to update profile: $e');
+      rethrow;
     }
   }
 
@@ -82,13 +85,21 @@ class AppState extends ChangeNotifier {
   /// Called after OTP is verified.
   /// Returns `true` if a saved role already existed (directly authenticated).
   /// Returns `false` if user is new and needs to select their role.
+  /// Throws if the auth session is not available (currentUser is null).
   Future<bool> login(String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '').trim();
     final formattedPhone = cleanPhone.startsWith('+')
         ? cleanPhone
         : '+91 $cleanPhone';
-    final userId = supabaseService.currentUser?.id ??
-        'usr-${DateTime.now().millisecondsSinceEpoch % 10000}';
+
+    final currentUser = supabaseService.currentUser;
+    if (currentUser == null) {
+      throw Exception(
+        'Authentication session not available. '
+        'Please try again or re-enter your OTP.',
+      );
+    }
+    final userId = currentUser.id;
 
     final profile = await supabaseService.getProfile(userId);
     if (profile != null) {
@@ -105,10 +116,8 @@ class AppState extends ChangeNotifier {
       _user = UserProfile(
         id: userId,
         phone: formattedPhone,
-        name: 'Vitthal Bhakt',
+        displayName: 'Warkari',
         role: UserRole.warkari,
-        dindiNumber: 'Dindi #14 (Alandi to Pandharpur)',
-        emergencyContact: '+91 98220 54321',
       );
       // Not yet authenticated until role is chosen
       return false; // Prompt for role selection
@@ -123,6 +132,9 @@ class AppState extends ChangeNotifier {
       await supabaseService.createProfile(_user);
     } catch (e) {
       debugPrint('Error creating profile: $e');
+      _authState = AuthenticationState.guest;
+      notifyListeners();
+      rethrow;
     }
     notifyListeners();
     await loadInitialData();
@@ -136,8 +148,7 @@ class AppState extends ChangeNotifier {
     _authState = AuthenticationState.guest;
     _user = const UserProfile(
       id: '',
-      name: 'Guest Pilgrim',
-      phone: '',
+      displayName: 'Guest Pilgrim',
       role: UserRole.warkari,
     );
     _reports = [];
@@ -227,13 +238,17 @@ class AppState extends ChangeNotifier {
   Future<void> updateFacilityStatus(String id, FacilityStatus newStatus) async {
     final index = _facilities.indexWhere((f) => f.id == id);
     if (index != -1) {
-      final updated = _facilities[index].copyWith(status: newStatus);
+      final previous = _facilities[index];
+      final updated = previous.copyWith(status: newStatus);
       _facilities[index] = updated;
       notifyListeners();
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
+        _facilities[index] = previous;
+        notifyListeners();
         debugPrint('Error updating facility: $e');
+        rethrow;
       }
     }
   }
@@ -241,13 +256,17 @@ class AppState extends ChangeNotifier {
   Future<void> updateFacilityOccupancy(String id, int occupancy) async {
     final index = _facilities.indexWhere((f) => f.id == id);
     if (index != -1) {
-      final updated = _facilities[index].copyWith(currentOccupancy: occupancy);
+      final previous = _facilities[index];
+      final updated = previous.copyWith(currentOccupancy: occupancy);
       _facilities[index] = updated;
       notifyListeners();
       try {
         await supabaseService.updateFacility(updated);
       } catch (e) {
+        _facilities[index] = previous;
+        notifyListeners();
         debugPrint('Error updating facility: $e');
+        rethrow;
       }
     }
   }
@@ -258,13 +277,18 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createFacility(facility);
     } catch (e) {
+      _facilities.remove(facility);
+      notifyListeners();
       debugPrint('Error adding facility: $e');
+      rethrow;
     }
   }
 
   // ============ Issue Reports ============
   List<IssueReport> _reports = [];
   List<IssueReport> get reports => List.unmodifiable(_reports);
+  List<IssueReport> get myReports =>
+      List.unmodifiable(_reports.where((r) => r.reporterId == _user.id));
 
   Future<void> addReport(IssueReport report) async {
     _reports.insert(0, report);
@@ -272,7 +296,10 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createIssueReport(report);
     } catch (e) {
-      debugPrint('Error adding report (RLS might prevent this): $e');
+      _reports.remove(report);
+      notifyListeners();
+      debugPrint('Error adding report: $e');
+      rethrow;
     }
   }
 
@@ -282,13 +309,17 @@ class AppState extends ChangeNotifier {
   Future<void> resolveReport(String reportId) async {
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index != -1) {
-      final updated = _reports[index].copyWith(status: IssueStatus.resolved);
+      final previous = _reports[index];
+      final updated = previous.copyWith(status: IssueStatus.resolved);
       _reports[index] = updated;
       notifyListeners();
       try {
         await supabaseService.updateIssueReport(updated);
       } catch (e) {
+        _reports[index] = previous;
+        notifyListeners();
         debugPrint('Error resolving report: $e');
+        rethrow;
       }
     }
   }
@@ -306,7 +337,10 @@ class AppState extends ChangeNotifier {
     try {
       await supabaseService.createVolunteerApplication(app);
     } catch (e) {
-      debugPrint('Error adding application (RLS might prevent this): $e');
+      _volunteerApplications.remove(app);
+      notifyListeners();
+      debugPrint('Error adding application: $e');
+      rethrow;
     }
   }
 
@@ -315,41 +349,23 @@ class AppState extends ChangeNotifier {
   Future<void> updateVolunteerAppStatus(String id, VolunteerStatus status) async {
     final index = _volunteerApplications.indexWhere((a) => a.id == id);
     if (index != -1) {
-      final updated = _volunteerApplications[index].copyWith(status: status);
+      final previous = _volunteerApplications[index];
+      final updated = previous.copyWith(status: status);
       _volunteerApplications[index] = updated;
       notifyListeners();
       try {
         await supabaseService.updateVolunteerApplication(updated);
       } catch (e) {
+        _volunteerApplications[index] = previous;
+        notifyListeners();
         debugPrint('Error updating volunteer application: $e');
+        rethrow;
       }
     }
   }
 
   // ============ Donations (LOCAL ONLY — for show, not wired to backend) ============
-  final List<DonationRecord> _donations = [
-    DonationRecord(
-      id: '#DON-2026-9812',
-      amount: 1000,
-      campName: 'Vitthal Rukmini Anna Chhatra',
-      donorName: 'Vitthal Bhakt',
-      donorPhone: '+91 98765 43210',
-      paymentMode: 'UPI (GPay)',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      taxReceiptRequired: true,
-      panNumber: 'ABCDE1234F',
-    ),
-    DonationRecord(
-      id: '#DON-2026-8740',
-      amount: 2500,
-      campName: 'Shree Medical Seva Camp',
-      donorName: 'Anonymous Pilgrim',
-      donorPhone: '+91 98220 99887',
-      paymentMode: 'PhonePe',
-      timestamp: DateTime.now().subtract(const Duration(days: 4)),
-      isAnonymous: true,
-    ),
-  ];
+  final List<DonationRecord> _donations = [];
   List<DonationRecord> get donations => List.unmodifiable(_donations);
 
   void addDonation(DonationRecord donation) {

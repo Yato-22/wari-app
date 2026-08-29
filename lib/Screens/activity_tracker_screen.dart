@@ -21,89 +21,7 @@ class ActivityTrackerScreen extends StatefulWidget {
 class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
   late int _activeTab;
 
-  final List<IssueReport> _reports = [
-    IssueReport(
-      id: '#REP-8942',
-      campId: 'camp-001',
-      campName: 'Vitthal Rukmini Anna Chhatra',
-      category: IssueCategory.waterShortage,
-      description: 'Water dispenser 2 has low pressure and requires immediate tank refill.',
-      severity: IssueSeverity.medium,
-      status: IssueStatus.inProgress,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 45)),
-    ),
-    IssueReport(
-      id: '#REP-7621',
-      campId: 'camp-002',
-      campName: 'Shree Medical Seva Camp',
-      category: IssueCategory.crowdBlockage,
-      description: 'Queue blockage near emergency blister care counter resolved by sevadharis.',
-      severity: IssueSeverity.low,
-      status: IssueStatus.resolved,
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-    ),
-    IssueReport(
-      id: '#REP-9014',
-      campId: 'camp-004',
-      campName: 'Pandharpur Seva Sanitation Camp',
-      category: IssueCategory.sanitation,
-      description: 'Sanitizer dispenser refill requested at main entrance.',
-      severity: IssueSeverity.low,
-      status: IssueStatus.pending,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-    ),
-  ];
-
-  final List<VolunteerApplication> _volunteerApps = [
-    VolunteerApplication(
-      id: '#VOL-APP-3391',
-      opportunityId: 'vol-001',
-      roleTitle: 'Water Distribution Network Seva',
-      campName: 'Sant Dnyaneshwar Water Point',
-      applicantName: 'Vitthal Bhakt',
-      applicantPhone: '+91 98765 43210',
-      selectedSlot: 'Morning Shift (06:00 AM - 12:00 PM)',
-      experience: 'Served in 2024 and 2025 Wari at Saswad food camp.',
-      status: VolunteerStatus.approved,
-      appliedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    VolunteerApplication(
-      id: '#VOL-APP-4102',
-      opportunityId: 'vol-002',
-      roleTitle: 'First Aid & Medical Assistant',
-      campName: 'Shree Medical Seva Camp',
-      applicantName: 'Vitthal Bhakt',
-      applicantPhone: '+91 98765 43210',
-      selectedSlot: 'Evening Shift (02:00 PM - 08:00 PM)',
-      experience: 'Certified in Red Cross First Aid.',
-      status: VolunteerStatus.pending,
-      appliedAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-  ];
-
-  final List<DonationRecord> _donations = [
-    DonationRecord(
-      id: '#DON-2026-9812',
-      amount: 1000,
-      campName: 'Vitthal Rukmini Anna Chhatra',
-      donorName: 'Vitthal Bhakt',
-      donorPhone: '+91 98765 43210',
-      paymentMode: 'UPI (GPay)',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      taxReceiptRequired: true,
-      panNumber: 'ABCDE1234F',
-    ),
-    DonationRecord(
-      id: '#DON-2026-8740',
-      amount: 2500,
-      campName: 'Shree Medical Seva Camp',
-      donorName: 'Vitthal Bhakt',
-      donorPhone: '+91 98765 43210',
-      paymentMode: 'PhonePe UPI',
-      timestamp: DateTime.now().subtract(const Duration(days: 4)),
-      isAnonymous: false,
-    ),
-  ];
+  // The lists are now fetched from AppState in the build method.
 
   @override
   void initState() {
@@ -113,10 +31,15 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = AppStateScope.of(context);
+    final myReports = appState.myReports;
+    final myVolunteerApps = appState.volunteerApplications;
+    final myDonations = appState.donations;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppTopBar(
-        customTitle: AppStateScope.of(context).translate('reports_title'),
+        customTitle: appState.translate('reports_title'),
         showBackButton: false,
         showSosButton: true,
       ),
@@ -135,9 +58,9 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
                 ),
                 child: Row(
                   children: [
-                    _buildTabButton(0, 'My Reports (${_reports.length})'),
-                    _buildTabButton(1, 'Volunteering (${_volunteerApps.length})'),
-                    _buildTabButton(2, 'Donations (${_donations.length})'),
+                    _buildTabButton(0, 'My Reports (${myReports.length})'),
+                    _buildTabButton(1, 'Volunteering (${myVolunteerApps.length})'),
+                    _buildTabButton(2, 'Donations (${myDonations.length})'),
                   ],
                 ),
               ),
@@ -149,9 +72,9 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
               child: IndexedStack(
                 index: _activeTab,
                 children: [
-                  _buildReportsList(),
-                  _buildVolunteeringList(),
-                  _buildDonationsList(),
+                  _buildReportsList(myReports),
+                  _buildVolunteeringList(myVolunteerApps),
+                  _buildDonationsList(myDonations),
                 ],
               ),
             ),
@@ -206,13 +129,16 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
     );
   }
 
-  Widget _buildReportsList() {
+  Widget _buildReportsList(List<IssueReport> reports) {
+    if (reports.isEmpty) {
+      return const Center(child: Text('No reports found.'));
+    }
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _reports.length,
+      itemCount: reports.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final report = _reports[index];
+        final report = reports[index];
         Color statusBg;
         Color statusText;
         switch (report.status) {
@@ -302,13 +228,16 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
     );
   }
 
-  Widget _buildVolunteeringList() {
+  Widget _buildVolunteeringList(List<VolunteerApplication> volunteerApps) {
+    if (volunteerApps.isEmpty) {
+      return const Center(child: Text('No volunteer applications found.'));
+    }
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _volunteerApps.length,
+      itemCount: volunteerApps.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final app = _volunteerApps[index];
+        final app = volunteerApps[index];
         final isApproved = app.status == VolunteerStatus.approved;
 
         return Container(
@@ -384,13 +313,16 @@ class _ActivityTrackerScreenState extends State<ActivityTrackerScreen> {
     );
   }
 
-  Widget _buildDonationsList() {
+  Widget _buildDonationsList(List<DonationRecord> donations) {
+    if (donations.isEmpty) {
+      return const Center(child: Text('No donations found.'));
+    }
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _donations.length,
+      itemCount: donations.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final don = _donations[index];
+        final don = donations[index];
 
         return Container(
           padding: const EdgeInsets.all(16),

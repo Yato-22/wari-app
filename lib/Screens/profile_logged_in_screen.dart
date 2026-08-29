@@ -61,35 +61,34 @@ class ProfileLoggedInScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                user.name.isNotEmpty ? user.name : 'Vitthal Bhakt',
+                                user.displayName.isNotEmpty ? user.displayName : 'Warkari',
                                 style: AppTypography.headlineLgMobile.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                user.phone.isNotEmpty ? user.phone : 'Not provided',
+                                (user.phone != null && user.phone!.isNotEmpty) ? user.phone! : 'Not provided',
                                 style: AppTypography.bodySm.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(9999),
-                                ),
-                                child: Text(
-                                  user.dindiNumber.isNotEmpty
-                                      ? user.dindiNumber
-                                      : 'Dindi #12 • Alandi Route',
-                                  style: AppTypography.labelBold.copyWith(
-                                    color: AppColors.primary,
-                                    fontSize: 11,
+                              if (user.dindiNumber != null && user.dindiNumber!.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(9999),
+                                  ),
+                                  child: Text(
+                                    user.dindiNumber!,
+                                    style: AppTypography.labelBold.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

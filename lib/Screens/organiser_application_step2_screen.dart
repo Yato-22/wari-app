@@ -79,10 +79,10 @@ class _OrganiserApplicationStep2ScreenState extends State<OrganiserApplicationSt
       
       final application = OrganiserApplication(
         id: '',
-        organiserName: appState.user.name.isEmpty ? 'Applicant Name' : appState.user.name,
+        organiserName: appState.user.displayName.isEmpty ? 'Applicant Name' : appState.user.displayName,
         trustName: 'Demo Trust', // Should be passed from Step 1, using mock
         registrationNumber: 'REG-1234',
-        phone: appState.user.phone,
+        phone: appState.user.phone ?? '',
         email: 'org@example.com',
         idProofType: 'Aadhaar Card',
         facilityName: _facilityNameController.text,

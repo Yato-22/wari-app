@@ -104,16 +104,24 @@ class IssueReport {
       }
     }
 
+    IssueSeverity parsedSeverity = IssueSeverity.medium;
+    if (json['severity'] != null) {
+      switch (json['severity']) {
+        case 'low': parsedSeverity = IssueSeverity.low; break;
+        case 'critical': parsedSeverity = IssueSeverity.critical; break;
+      }
+    }
+
     return IssueReport(
       id: json['id'] as String? ?? '',
       campId: json['facility_id'] as String? ?? '',
       campName: 'Facility', // We don't have the join right now, provide dummy or handle in UI
       category: parsedCategory,
       description: json['note'] as String? ?? '',
+      severity: parsedSeverity,
       status: parsedStatus,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
       reporterId: json['reporter_id'] as String?,
-      severity: IssueSeverity.medium, // Default
     );
   }
 
@@ -123,6 +131,7 @@ class IssueReport {
       'facility_id': campId,
       if (reporterId != null) 'reporter_id': reporterId,
       'issue_type': category.name,
+      'severity': severity.name,
       'note': description,
       'status': status.name,
       // 'created_at' is handled by DB defaults, but can send if needed

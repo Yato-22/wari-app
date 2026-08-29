@@ -108,6 +108,15 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     try {
       final appState = AppStateScope.of(context);
       await appState.supabaseService.verifyOTP(phone, otp);
+
+      // Wait briefly for the auth session to propagate after OTP verification,
+      // then explicitly check for the session to avoid a null currentUser race.
+      if (appState.supabaseService.currentUser == null) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        // Force a session refresh if still null
+        await appState.supabaseService.client?.auth.refreshSession();
+      }
+
       final hasSavedRole = await appState.login(phone); // fetch profile
 
       if (mounted) {
