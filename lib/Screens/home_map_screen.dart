@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
@@ -9,6 +11,8 @@ import '../widgets/facility_card.dart';
 import '../models/camp_facility.dart';
 import '../navigation/app_routes.dart';
 import '../models/app_state.dart';
+import '../services/routing_service.dart';
+import '../services/location_service.dart';
 
 class HomeMapScreen extends StatefulWidget {
   const HomeMapScreen({super.key});
@@ -43,8 +47,17 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Real geographical Palkhi pilgrimage route coordinates from Alandi to Pandharpur
-  static const List<LatLng> _palkhiRouteCoordinates = [
+  // --- Road-snapped route state ---
+  List<LatLng> _roadSnappedRoute = [];
+  bool _isLoadingRoute = true;
+
+  // --- Live user location state ---
+  LatLng? _userLocation;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  bool _isLocationEnabled = false;
+
+  // Real geographical Palkhi pilgrimage route waypoints from Alandi to Pandharpur
+  static const List<LatLng> _palkhiRouteWaypoints = [
     LatLng(18.6772, 73.8967), // Alandi (Start of Sant Dnyaneshwar Palkhi)
     LatLng(18.5204, 73.8567), // Pune (Shivajinagar)
     LatLng(18.5089, 73.9260), // Hadapsar
@@ -78,6 +91,12 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     _pulseAnimation = Tween<double>(begin: 0.95, end: 1.15).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Fetch the road-snapped route
+    _fetchRoadRoute();
+
+    // Initialize live location
+    _initializeLocation();
   }
 
   @override
@@ -85,7 +104,108 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     _pulseController.dispose();
     _searchController.dispose();
     _mapController.dispose();
+    _positionStreamSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Fetches the road-following route from OSRM.
+  Future<void> _fetchRoadRoute() async {
+    final route = await RoutingService.fetchRoute(_palkhiRouteWaypoints);
+    if (mounted) {
+      setState(() {
+        _roadSnappedRoute = route;
+        _isLoadingRoute = false;
+      });
+    }
+  }
+
+  /// Initializes live location tracking.
+  Future<void> _initializeLocation() async {
+    final error = await LocationService.checkAndRequestPermissions();
+    if (error != null) {
+      // Permission denied — don't block, just skip location
+      if (mounted) {
+        setState(() {
+          _isLocationEnabled = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLocationEnabled = true;
+      });
+    }
+
+    // Get initial position
+    final result = await LocationService.getCurrentPosition();
+    if (result.isSuccess && mounted) {
+      setState(() {
+        _userLocation = LatLng(
+          result.position!.latitude,
+          result.position!.longitude,
+        );
+      });
+    }
+
+    // Start listening to position stream
+    final stream = LocationService.getPositionStream(distanceFilter: 10);
+    if (stream != null) {
+      _positionStreamSubscription = stream.listen((position) {
+        if (mounted) {
+          setState(() {
+            _userLocation = LatLng(position.latitude, position.longitude);
+          });
+        }
+      });
+    }
+  }
+
+  /// Centers the map on the user's current location.
+  void _centerOnUserLocation() async {
+    if (_userLocation != null) {
+      _mapController.move(_userLocation!, 15.0);
+      return;
+    }
+
+    // Try to fetch location if not available yet
+    if (!_isLocationEnabled) {
+      final error = await LocationService.checkAndRequestPermissions();
+      if (error != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+            backgroundColor: AppColors.error,
+            action: SnackBarAction(
+              label: 'Settings',
+              textColor: Colors.white,
+              onPressed: () => LocationService.openAppSettings(),
+            ),
+          ),
+        );
+        return;
+      }
+      setState(() => _isLocationEnabled = true);
+    }
+
+    final result = await LocationService.getCurrentPosition();
+    if (result.isSuccess && mounted) {
+      setState(() {
+        _userLocation = LatLng(
+          result.position!.latitude,
+          result.position!.longitude,
+        );
+      });
+      _mapController.move(_userLocation!, 15.0);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Could not get location'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   List<CampFacility> _getFilteredFacilities(List<CampFacility> allFacilities) {
@@ -150,6 +270,46 @@ class _HomeMapScreenState extends State<HomeMapScreen>
           Positioned.fill(
             child: _buildOpenStreetMap(filteredFacilities),
           ),
+
+          // Route loading indicator
+          if (_isLoadingRoute)
+            Positioned(
+              top: 120,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(9999),
+                    boxShadow: const [AppColors.tactileSaffronShadow],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Loading road route...',
+                        style: AppTypography.labelBold.copyWith(
+                          color: AppColors.onPrimaryContainer,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // 2. Floating Top Controls (Search & Filter Chips)
           Positioned(
@@ -234,6 +394,14 @@ class _HomeMapScreenState extends State<HomeMapScreen>
             bottom: _selectedFacility != null ? 220 : 16,
             child: Column(
               children: [
+                // My Location button
+                _buildMapActionButton(
+                  icon: Icons.person_pin_circle,
+                  tooltip: 'My Location',
+                  onTap: _centerOnUserLocation,
+                  highlight: _userLocation != null,
+                ),
+                const SizedBox(height: 8),
                 _buildMapActionButton(
                   icon: Icons.my_location,
                   tooltip: 'Center on Live Palkhi',
@@ -415,19 +583,28 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
+    bool highlight = false,
   }) {
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: highlight
+            ? AppColors.primaryContainer
+            : AppColors.surfaceContainerLowest,
         shape: BoxShape.circle,
         border:
-            Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
+            Border.all(color: highlight
+                ? AppColors.primary.withValues(alpha: 0.6)
+                : AppColors.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: const [AppColors.tactileSaffronShadow],
       ),
       child: IconButton(
-        icon: Icon(icon, color: AppColors.onSurfaceVariant, size: 20),
+        icon: Icon(icon,
+            color: highlight
+                ? AppColors.primary
+                : AppColors.onSurfaceVariant,
+            size: 20),
         tooltip: tooltip,
         onPressed: onTap,
       ),
@@ -437,6 +614,11 @@ class _HomeMapScreenState extends State<HomeMapScreen>
   // --- OpenStreetMap Main View ---
   Widget _buildOpenStreetMap(List<CampFacility> facilities) {
     final currentLayer = _mapTileLayers[_currentMapLayerIndex];
+
+    // Use road-snapped route if available, otherwise fall back to straight-line waypoints
+    final routePoints = _roadSnappedRoute.isNotEmpty
+        ? _roadSnappedRoute
+        : _palkhiRouteWaypoints;
 
     return FlutterMap(
       mapController: _mapController,
@@ -461,16 +643,16 @@ class _HomeMapScreenState extends State<HomeMapScreen>
           maxZoom: 19,
         ),
 
-        // Palkhi Pilgrimage Route Polyline
+        // Palkhi Pilgrimage Route Polyline (now road-snapped!)
         PolylineLayer(
           polylines: [
             Polyline(
-              points: _palkhiRouteCoordinates,
+              points: routePoints,
               color: const Color(0xFF8F4E00).withValues(alpha: 0.4),
               strokeWidth: 7.0,
             ),
             Polyline(
-              points: _palkhiRouteCoordinates,
+              points: routePoints,
               color: AppColors.primaryContainer,
               strokeWidth: 4.0,
               borderColor: AppColors.primary,
@@ -479,7 +661,7 @@ class _HomeMapScreenState extends State<HomeMapScreen>
           ],
         ),
 
-        // Markers: Live Palkhi + Camp Facilities
+        // Markers: Live Palkhi + Camp Facilities + User Location
         MarkerLayer(
           markers: [
             // 1. Live Palkhi Pulsing Marker
@@ -490,7 +672,16 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               child: _buildLivePalkhiMarker(),
             ),
 
-            // 2. Dynamic Camp Facility Markers
+            // 2. User Location Marker (blue dot)
+            if (_userLocation != null)
+              Marker(
+                point: _userLocation!,
+                width: 70,
+                height: 70,
+                child: _buildUserLocationMarker(),
+              ),
+
+            // 3. Dynamic Camp Facility Markers
             ...facilities.map((facility) {
               final isSelected = _selectedFacility?.id == facility.id;
               return Marker(
@@ -512,6 +703,67 @@ class _HomeMapScreenState extends State<HomeMapScreen>
               );
             }),
           ],
+        ),
+      ],
+    );
+  }
+
+  // --- User Location Marker Widget (blue Google Maps style dot) ---
+  Widget _buildUserLocationMarker() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(9999),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x401565C0),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            'You',
+            style: AppTypography.labelBold.copyWith(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        ScaleTransition(
+          scale: _pulseAnimation,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade500.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade600,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.shade400.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -622,5 +874,3 @@ class _HomeMapScreenState extends State<HomeMapScreen>
     );
   }
 }
-
-

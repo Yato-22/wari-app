@@ -9,9 +9,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await Supabase.initialize(
-    url: 'https://hoeayfrmlclbxmikwcyl.supabase.co',
+    url: 'https://lnenyejgzoslrhdgnujk.supabase.co',
     // ignore: deprecated_member_use
-    anonKey: 'sb_publishable_3a1m9eDPOma0HhLRFsu7sA_eW4WXAGG',
+    anonKey: 'sb_publishable__jB3aesQi7oEI9jL_H74yw_dYrCmyyB',
   );
 
   runApp(const WariConnectApp());

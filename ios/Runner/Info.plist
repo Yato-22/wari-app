@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WariConnect needs your location to show your position on the Palkhi route map and help you find nearby facilities.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>WariConnect uses your location to track your pilgrimage progress even when the app is in the background.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
